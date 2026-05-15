@@ -41,7 +41,6 @@
     button { background: #f59e0b; color: #0f172a; font-weight: bold; cursor: pointer; margin-bottom: 0; }
     button:active { transform: scale(0.98); }
     
-    /* Dynamic Feature Visibility */
     .hidden { display: none !important; }
     
     #canvas-container, #voice-container {
@@ -56,7 +55,7 @@
     canvas {
       background: white;
       border-radius: 8px;
-      touch-action: none; /* Crucial: Deadlocks screen scrolling so you can draw cleanly */
+      touch-action: none; /* Stops the screen from scrolling/bouncing while you draw */
       cursor: crosshair;
     }
     .voice-btn { background: #ef4444; color: white; font-weight: bold; margin-bottom: 0; }
@@ -102,12 +101,10 @@
 </div>
 
 <script>
-  // --- DATABASE CONNECTIVITY ---
   const SUPABASE_URL = "https://kucwhpkcpfadsdrqvxjv.supabase.co";
   const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt1Y3docGtjcGZhZHNkcnF2eGp2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4NjQ2NzAsImV4cCI6MjA5NDQ0MDY3MH0.PIUz00Qm_r6NkCKL8I4XQSSmvR02qt2VPwJQVY2s2qg";
   const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-  // Switch display elements instantly based on choice
   function toggleInputs() {
     const type = document.getElementById('typeSelect').value;
     document.getElementById('text-container').classList.toggle('hidden', type !== 'text');
@@ -117,23 +114,21 @@
     if (type === 'doodle') initCanvas();
   }
 
-  // --- INSTAGRAM-STYLE DOODLE ENGINE ---
+  // --- INSTAGRAM DOODLE ENGINE ---
   const canvas = document.getElementById('doodleCanvas');
   const ctx = canvas.getContext('2d');
   let drawing = false;
 
   function initCanvas() {
-    ctx.strokeStyle = "#0f172a"; // Ink color
-    ctx.lineWidth = 5;          // Smooth, crisp brush stroke
+    ctx.strokeStyle = "#0f172a"; 
+    ctx.lineWidth = 5;          
     ctx.lineCap = "round";
     ctx.lineJoin = "round";
     
-    // Desktop Mouse events
     canvas.addEventListener('mousedown', startDrawing);
     canvas.addEventListener('mouseup', stopDrawing);
     canvas.addEventListener('mousemove', drawMouse);
 
-    // Mobile Phone Touch events
     canvas.addEventListener('touchstart', startTouch);
     canvas.addEventListener('touchend', stopDrawing);
     canvas.addEventListener('touchmove', drawTouch);
@@ -155,7 +150,7 @@
   
   function drawTouch(e) {
     if (!drawing) return;
-    e.preventDefault(); // Deadlocks smartphone bounce mechanics
+    e.preventDefault(); 
     const rect = canvas.getBoundingClientRect();
     const touch = e.touches[0];
     ctx.lineTo(touch.clientX - rect.left, touch.clientY - rect.top);
@@ -168,7 +163,7 @@
     ctx.clearRect(0, 0, canvas.width, canvas.height);
   }
 
-  // --- AUDIO RECORDING ENGINE ---
+  // --- AUDIO ENGINE ---
   let mediaRecorder;
   let audioChunks = [];
   let audioBase64 = "";
@@ -176,32 +171,29 @@
 
   async function toggleRecording() {
     const recordBtn = document.getElementById('recordBtn');
-    
     if (!isRecording) {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
         mediaRecorder = new MediaRecorder(stream);
         audioChunks = [];
-
         mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
         mediaRecorder.onstop = async () => {
           const audioBlob = new Blob(audioChunks, { type: 'audio/mp3' });
           const reader = new FileReader();
           reader.readAsDataURL(audioBlob);
           reader.onloadend = () => {
-            audioBase64 = reader.result; // Saves base64 text data link string
+            audioBase64 = reader.result;
             const playback = document.getElementById('audioPlayback');
             playback.src = audioBase64;
             playback.classList.remove('hidden');
           };
         };
-
         mediaRecorder.start();
         isRecording = true;
         recordBtn.innerText = "🛑 Stop Recording";
         recordBtn.classList.add('recording');
       } catch (err) {
-        alert("Microphone access denied or not supported on this browser context.");
+        alert("Microphone permission denied.");
       }
     } else {
       mediaRecorder.stop();
@@ -211,34 +203,26 @@
     }
   }
 
-  // --- UNIFIED SUBMIT ACTION TO SUPABASE ---
+  // --- DATABASE SUBMISSION ---
   async function postMemory() {
     const type = document.getElementById('typeSelect').value;
     const statusMsg = document.getElementById('status-msg');
     let contentData = "";
 
-    if (type === 'text') {
-      contentData = document.getElementById('textContent').value;
-    } else if (type === 'doodle') {
-      contentData = canvas.toDataURL("image/png"); // Converts drawing into a transparent PNG data link!
-    } else if (type === 'voice') {
-      contentData = audioBase64;
-    }
+    if (type === 'text') contentData = document.getElementById('textContent').value;
+    else if (type === 'doodle') contentData = canvas.toDataURL("image/png"); // Saves drawing as PNG sticker data!
+    else if (type === 'voice') contentData = audioBase64;
 
-    if (!contentData || contentData === "data:image/png;base64,iVBOR000KGgoAAAANSUhEUgAAAUAAAAEwCAYAAADV...") {
-      statusMsg.innerText = "⚠️ Input content cannot be empty!";
+    if (!contentData || contentData.startsWith("data:image/png;base64,iVBOR000KGgoAAAANSUhEUgAAAUAAAAEwCAYAAADV")) {
+      statusMsg.innerText = "⚠️ Input cannot be empty!";
       return;
     }
 
-    statusMsg.innerText = "🚀 Uploading to her scrapbook panel...";
+    statusMsg.innerText = "🚀 Sending to her scrapbook...";
+    const { data, error } = await supabase.from('scrapbook').insert([{ type, content: contentData }]);
 
-    const { data, error } = await supabase
-      .from('scrapbook')
-      .insert([{ type: type, content: contentData }]);
-
-    if (error) {
-      statusMsg.innerText = "❌ Database Error: " + error.message;
-    } else {
+    if (error) statusMsg.innerText = "❌ Error: " + error.message;
+    else {
       statusMsg.innerText = "🎉 Memory saved successfully!";
       clearCanvas();
       document.getElementById('textContent').value = "";
@@ -247,6 +231,5 @@
     }
   }
 </script>
-
 </body>
 </html>
