@@ -29,15 +29,21 @@
     </div>
 
     <script>
-        // YOUR LIVE CONNECTION
+        // LIVE CONNECTION
         const _supabase = supabase.createClient(
             'https://kucwhpkcpfadsdrqvxjv.supabase.co', 
             'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt1Y3docGtjcGZhZHNkcnF2eGp2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4NjQ2NzAsImV4cCI6MjA5NDQ0MDY3MH0.PIUz00Qm_r6NkCKL8I4XQSSmvR02qt2VPwJQVY2s2qg'
         );
 
         const urlParams = new URLSearchParams(window.location.search);
-        const folderType = urlParams.get('type') || 'text';
+        let folderType = urlParams.get('type') || 'text';
         
+        // Match the layout folder URL parameter with the string saved by the Admin panel
+        let dbQueryType = folderType;
+        if (folderType === 'drawing') {
+            dbQueryType = 'doodle'; 
+        }
+
         const titles = { 'voice': 'VOICE NOTES', 'drawing': 'DOODLES', 'text': 'JUST BECAUSE' };
         document.getElementById('folder-title').innerText = titles[folderType] || 'INBOX';
 
@@ -45,7 +51,7 @@
             const { data, error } = await _supabase
                 .from('scrapbook')
                 .select('*')
-                .eq('type', folderType)
+                .eq('type', dbQueryType) // Queries using the corrected database type indicator
                 .order('created_at', { ascending: false });
 
             const list = document.getElementById('inbox-list');
@@ -65,7 +71,8 @@
                 const card = document.createElement('div');
                 card.className = 'ngl-card';
                 
-                const previewText = item.type === 'drawing' ? 'Sent a doodle...' : 
+                // Slick item preview snippets
+                const previewText = item.type === 'doodle' ? 'Sent a doodle...' : 
                                    item.type === 'voice' ? 'Sent a voice note...' : 
                                    item.content;
 
@@ -84,18 +91,24 @@
 
         function openModal(item) {
             const body = document.getElementById('modal-body');
-            if (item.type === 'drawing') {
-                body.innerHTML = `<img src="${item.content}" style="width:100%; border-radius:10px;">`;
+            if (item.type === 'doodle') {
+                body.innerHTML = `<img src="${item.content}" style="width:100%; border-radius:10px; max-height: 65vh; object-fit: contain; display: block; margin: 0 auto;">`;
             } else if (item.type === 'voice') {
-                body.innerHTML = `<audio controls src="${item.content}" style="width:100%"></audio>`;
+                body.innerHTML = `
+                    <p style="color:#666; font-size:14px; text-align:center; margin-bottom:10px;">Voice Note</p>
+                    <audio controls src="${item.content}" style="width:100%; outline:none;"></audio>
+                `;
             } else {
-                body.innerHTML = `<p style="color:#333; font-size:1.1rem; line-height:1.6;">${item.content}</p>`;
+                body.innerHTML = `<p style="color:#333; font-size:1.1rem; line-height:1.6; word-wrap: break-word;">${item.content}</p>`;
             }
             document.getElementById('modal').classList.remove('hidden');
         }
 
         function closeModal() {
             document.getElementById('modal').classList.add('hidden');
+            // Stops audio playback instantly if they close the modal halfway through listening
+            const audio = document.querySelector('#modal-body audio');
+            if(audio) audio.pause();
         }
 
         loadNotes();
