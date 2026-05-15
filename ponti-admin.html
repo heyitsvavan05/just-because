@@ -268,7 +268,7 @@
     ctx.moveTo(e.clientX - rect.left, e.clientY - rect.top);
   }
   
-  // FIXED coordinate math mapping for fluid finger tracing
+  // FIXED mobile touch tracking
   function drawTouch(e) {
     if (!drawing) return;
     e.preventDefault(); 
@@ -293,7 +293,14 @@
     const recordBtn = document.getElementById('recordBtn');
     if (!isRecording) {
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        // High-fidelity microphone setup (Underwater filter removed!)
+        const stream = await navigator.mediaDevices.getUserMedia({ 
+          audio: {
+            echoCancellation: false,
+            noiseSuppression: false,
+            autoGainControl: true
+          } 
+        });
         mediaRecorder = new MediaRecorder(stream);
         audioChunks = [];
         mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
