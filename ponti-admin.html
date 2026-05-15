@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Ponti Admin Panel</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
@@ -41,8 +41,9 @@
     button { background: #f59e0b; color: #0f172a; font-weight: bold; cursor: pointer; margin-bottom: 0; }
     button:active { transform: scale(0.98); }
     
-    /* Dynamic Feature UI */
+    /* Dynamic Feature Visibility */
     .hidden { display: none !important; }
+    
     #canvas-container, #voice-container {
       display: flex;
       flex-direction: column;
@@ -55,7 +56,7 @@
     canvas {
       background: white;
       border-radius: 8px;
-      touch-action: none; /* Prevents phone browser tracking/bouncing while doodling */
+      touch-action: none; /* Crucial: Deadlocks screen scrolling so you can draw cleanly */
       cursor: crosshair;
     }
     .voice-btn { background: #ef4444; color: white; font-weight: bold; margin-bottom: 0; }
@@ -88,7 +89,7 @@
   <div id="canvas-container" class="hidden">
     <label style="margin-bottom: 8px; display: block;">Draw with your finger:</label>
     <canvas id="doodleCanvas" width="320" height="320"></canvas>
-    <button type="button" onclick="clearCanvas()" style="background: #64748b; color: white; padding: 8px; margin-top: 10px; font-size: 14px;">Clear Canvas</button>
+    <button type="button" onclick="clearCanvas()" style="background: #64748b; color: white; padding: 8px; margin-top: 10px; font-size: 14px; width: auto;">Clear Canvas</button>
   </div>
 
   <div id="voice-container" class="hidden">
@@ -101,11 +102,12 @@
 </div>
 
 <script>
-  // --- CONNECTED CREDENTIALS SET UP ---
+  // --- DATABASE CONNECTIVITY ---
   const SUPABASE_URL = "https://kucwhpkcpfadsdrqvxjv.supabase.co";
   const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt1Y3docGtjcGZhZHNkcnF2eGp2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4NjQ2NzAsImV4cCI6MjA5NDQ0MDY3MH0.PIUz00Qm_r6NkCKL8I4XQSSmvR02qt2VPwJQVY2s2qg";
   const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+  // Switch display elements instantly based on choice
   function toggleInputs() {
     const type = document.getElementById('typeSelect').value;
     document.getElementById('text-container').classList.toggle('hidden', type !== 'text');
@@ -115,67 +117,58 @@
     if (type === 'doodle') initCanvas();
   }
 
-  // --- DOODLE ENGINE ---
+  // --- INSTAGRAM-STYLE DOODLE ENGINE ---
   const canvas = document.getElementById('doodleCanvas');
   const ctx = canvas.getContext('2d');
   let drawing = false;
 
   function initCanvas() {
-    ctx.strokeStyle = "#0f172a";
-    ctx.lineWidth = 5;
+    ctx.strokeStyle = "#0f172a"; // Ink color
+    ctx.lineWidth = 5;          // Smooth, crisp brush stroke
     ctx.lineCap = "round";
     ctx.lineJoin = "round";
     
-    // Unbinding old mouse/touch events to prevent double-firing
-    canvas.replaceWith(canvas.cloneNode(true));
-    const cleanCanvas = document.getElementById('doodleCanvas');
-    const cleanCtx = cleanCanvas.getContext('2d');
-    cleanCtx.strokeStyle = "#0f172a";
-    cleanCtx.lineWidth = 5;
-    cleanCtx.lineCap = "round";
-    cleanCtx.lineJoin = "round";
+    // Desktop Mouse events
+    canvas.addEventListener('mousedown', startDrawing);
+    canvas.addEventListener('mouseup', stopDrawing);
+    canvas.addEventListener('mousemove', drawMouse);
 
-    cleanCanvas.addEventListener('mousedown', (e) => startDrawing(e, cleanCanvas, cleanCtx));
-    cleanCanvas.addEventListener('mouseup', () => stopDrawing(cleanCtx));
-    cleanCanvas.addEventListener('mousemove', (e) => drawMouse(e, cleanCanvas, cleanCtx));
-
-    cleanCanvas.addEventListener('touchstart', (e) => startTouch(e, cleanCanvas, cleanCtx));
-    cleanCanvas.addEventListener('touchend', () => stopDrawing(cleanCtx));
-    cleanCanvas.addEventListener('touchmove', (e) => drawTouch(e, cleanCanvas, cleanCtx));
+    // Mobile Phone Touch events
+    canvas.addEventListener('touchstart', startTouch);
+    canvas.addEventListener('touchend', stopDrawing);
+    canvas.addEventListener('touchmove', drawTouch);
   }
 
-  function startDrawing(e, cvs, cX) { drawing = true; cX.beginPath(); drawMouse(e, cvs, cX); }
-  function stopDrawing(cX) { drawing = false; cX.beginPath(); }
+  function startDrawing(e) { drawing = true; ctx.beginPath(); drawMouse(e); }
+  function stopDrawing() { drawing = false; ctx.beginPath(); }
   
-  function drawMouse(e, cvs, cX) {
+  function drawMouse(e) {
     if (!drawing) return;
-    const rect = cvs.getBoundingClientRect();
-    cX.lineTo(e.clientX - rect.left, e.clientY - rect.top);
-    cX.stroke();
-    cX.beginPath();
-    cX.moveTo(e.clientX - rect.left, e.clientY - rect.top);
+    const rect = canvas.getBoundingClientRect();
+    ctx.lineTo(e.clientX - rect.left, e.clientY - rect.top);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(e.clientX - rect.left, e.clientY - rect.top);
   }
 
-  function startTouch(e, cvs, cX) { drawing = true; cX.beginPath(); drawTouch(e, cvs, cX); }
+  function startTouch(e) { drawing = true; ctx.beginPath(); drawTouch(e); }
   
-  function drawTouch(e, cvs, cX) {
+  function drawTouch(e) {
     if (!drawing) return;
-    e.preventDefault(); 
-    const rect = cvs.getBoundingClientRect();
+    e.preventDefault(); // Deadlocks smartphone bounce mechanics
+    const rect = canvas.getBoundingClientRect();
     const touch = e.touches[0];
-    cX.lineTo(touch.clientX - rect.left, touch.clientY - rect.top);
-    cX.stroke();
-    cX.beginPath();
-    cX.moveTo(touch.clientX - rect.left, touch.clientY - rect.top);
+    ctx.lineTo(touch.clientX - rect.left, touch.clientY - rect.top);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(touch.clientX - rect.left, touch.clientY - rect.top);
   }
 
   function clearCanvas() {
-    const cvs = document.getElementById('doodleCanvas');
-    const cX = cvs.getContext('2d');
-    cX.clearRect(0, 0, cvs.width, cvs.height);
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
   }
 
-  // --- VOICE RECORDER ENGINE ---
+  // --- AUDIO RECORDING ENGINE ---
   let mediaRecorder;
   let audioChunks = [];
   let audioBase64 = "";
@@ -196,7 +189,7 @@
           const reader = new FileReader();
           reader.readAsDataURL(audioBlob);
           reader.onloadend = () => {
-            audioBase64 = reader.result;
+            audioBase64 = reader.result; // Saves base64 text data link string
             const playback = document.getElementById('audioPlayback');
             playback.src = audioBase64;
             playback.classList.remove('hidden');
@@ -208,7 +201,7 @@
         recordBtn.innerText = "🛑 Stop Recording";
         recordBtn.classList.add('recording');
       } catch (err) {
-        alert("Microphone permission denied or not supported on this browser.");
+        alert("Microphone access denied or not supported on this browser context.");
       }
     } else {
       mediaRecorder.stop();
@@ -218,34 +211,33 @@
     }
   }
 
-  // --- SUBMITTER ---
+  // --- UNIFIED SUBMIT ACTION TO SUPABASE ---
   async function postMemory() {
     const type = document.getElementById('typeSelect').value;
     const statusMsg = document.getElementById('status-msg');
-    const cvs = document.getElementById('doodleCanvas');
     let contentData = "";
 
     if (type === 'text') {
       contentData = document.getElementById('textContent').value;
     } else if (type === 'doodle') {
-      contentData = cvs.toDataURL("image/png");
+      contentData = canvas.toDataURL("image/png"); // Converts drawing into a transparent PNG data link!
     } else if (type === 'voice') {
       contentData = audioBase64;
     }
 
     if (!contentData || contentData === "data:image/png;base64,iVBOR000KGgoAAAANSUhEUgAAAUAAAAEwCAYAAADV...") {
-      statusMsg.innerText = "⚠️ Input cannot be empty!";
+      statusMsg.innerText = "⚠️ Input content cannot be empty!";
       return;
     }
 
-    statusMsg.innerText = "🚀 Sending memory... Please wait.";
+    statusMsg.innerText = "🚀 Uploading to her scrapbook panel...";
 
     const { data, error } = await supabase
       .from('scrapbook')
       .insert([{ type: type, content: contentData }]);
 
     if (error) {
-      statusMsg.innerText = "❌ Error: " + error.message;
+      statusMsg.innerText = "❌ Database Error: " + error.message;
     } else {
       statusMsg.innerText = "🎉 Memory saved successfully!";
       clearCanvas();
