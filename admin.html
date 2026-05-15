@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Ponti Admin Panel</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    body {
+      background-color: #0f172a;
+      color: #f8fafc;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+      margin: 0;
+    }
+    .container {
+      width: 100%;
+      max-width: 400px;
+      background: #1e293b;
+      padding: 24px;
+      border-radius: 16px;
+      box-shadow: 0 10px 25px -5px rgba(0,0,0,0.3);
+      box-sizing: border-box;
+    }
+    h2 { text-align: center; color: #f59e0b; margin-top: 0; margin-bottom: 20px; }
+    label { font-size: 14px; color: #94a3b8; font-weight: 600; }
+    select, textarea, button {
+      width: 100%;
+      padding: 14px;
+      margin: 8px 0 20px 0;
+      border-radius: 8px;
+      border: none;
+      font-size: 16px;
+      box-sizing: border-box;
+    }
+    select, textarea { background: #334155; color: white; }
+    textarea { height: 120px; resize: none; margin-bottom: 20px; }
+    button { background: #f59e0b; color: #0f172a; font-weight: bold; cursor: pointer; margin-bottom: 0; }
+    button:active { transform: scale(0.98); }
+    
+    .hidden { display: none !important; }
+    
+    #canvas-container, #voice-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      background: #0f172a;
+      padding: 12px;
+      border-radius: 12px;
+      margin: 8px 0 20px 0;
+    }
+    canvas {
+      background: white;
+      border-radius: 8px;
+      touch-action: none;
+      cursor: crosshair;
+    }
+    .voice-btn { background: #ef4444; color: white; font-weight: bold; margin-bottom: 0; }
+    .recording { animation: pulse 1.5s infinite; background: #b91c1c; }
+    @keyframes pulse {
+      0% { opacity: 1; }
+      50% { opacity: 0.6; }
+      100% { opacity: 1; }
+    }
+    #status-msg { text-align: center; margin-top: 15px; font-size: 14px; color: #cbd5e1; font-weight: bold; }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h2>Send a Memory</h2>
+  
+  <label for="typeSelect">Choose Type:</label>
+  <select id="typeSelect" onchange="toggleInputs()">
+    <option value="text">Just Because (Text)</option>
+    <option value="doodle">Doodle (Draw Now)</option>
+    <option value="voice">Voice Note (Record Now)</option>
+  </select>
+
+  <div id="text-container">
+    <label for="textContent">Your Message:</label>
+    <textarea id="textContent" placeholder="Type your message here..."></textarea>
+  </div>
+
+  <div id="canvas-container" class="hidden">
+    <label style="margin-bottom: 8px; display: block;">Draw with your finger:</label>
+    <canvas id="doodleCanvas" width="320" height="320"></canvas>
+    <button type="button" onclick="clearCanvas()" style="background: #64748b; color: white; padding: 8px; margin-top: 10px; font-size: 14px; width: auto;">Clear Canvas</button>
+  </div>
+
+  <div id="voice-container" class="hidden">
+    <button type="button" id="recordBtn" class="voice-btn" onclick="toggleRecording()">🎤 Start Recording</button>
+    <audio id="audioPlayback" controls class="hidden" style="margin-top: 15px; width: 100%;"></audio>
+  </div>
+
+  <button id="submitBtn" onclick="postMemory()">Post Memory</button>
+  <p id="status-msg"></p>
+</div>
+
+<script>
+  const SUPABASE_URL = "https://kucwhpkcpfadsdrqvxjv.supabase.co";
+  const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt1Y3docGtjcGZhZHNkcnF2eGp2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4NjQ2NzAsImV4cCI6MjA5NDQ0MDY3MH0.PIUz00Qm_r6NkCKL8I4XQSSmvR02qt2VPwJQVY2s2qg";
+  const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+  function toggleInputs() {
+    const type = document.getElementById('typeSelect').value;
+    document.getElementById('text-container').classList.toggle('hidden', type !== 'text');
+    document.getElementById('canvas-container').classList.toggle('hidden', type !== 'doodle');
+    document.getElementById('voice-container').classList.toggle('hidden', type !== 'voice');
+    
+    if (type === 'doodle') initCanvas();
+  }
+
+  const canvas = document.getElementById('doodleCanvas');
+  const ctx = canvas.getContext('2d');
+  let drawing = false;
+
+  function initCanvas() {
+    ctx.strokeStyle = "#0f172a"; 
+    ctx.lineWidth = 5;          
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+    
+    canvas.addEventListener('mousedown', startDrawing);
+    canvas.addEventListener('mouseup', stopDrawing);
+    canvas.addEventListener('mousemove', drawMouse);
+
+    canvas.addEventListener('touchstart', startTouch);
+    canvas.addEventListener('touchend', stopDrawing);
+    canvas.addEventListener('touchmove', drawTouch);
+  }
+
+  function startDrawing(e) { drawing = true; ctx.beginPath(); drawMouse(e); }
+  function stopDrawing() { drawing = false; ctx.beginPath(); }
+  
+  function drawMouse(e) {
+    if (!drawing) return;
+    const rect = canvas.getBoundingClientRect();
+    ctx.lineTo(e.clientX - rect.left, e.clientY - rect.top);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(e.clientX - rect.left, e.clientY - rect.top);
+  }
+
+  function startTouch(e) { drawing = true; ctx.beginPath(); drawTouch(e); }
+  
+  function drawTouch(e) {
+    if (!drawing) return;
+    e.preventDefault(); 
+    const rect = canvas.getBoundingClientRect();
+    const touch = e.touches[0];
+    ctx.lineTo(touch.clientX - rect.left, touch.clientY - rect.top);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(touch.clientX - rect.left, touch.clientY - rect.top);
+  }
+
+  function clearCanvas() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+  }
+
+  let mediaRecorder;
+  let audioChunks = [];
+  let audioBase64 = "";
+  let isRecording = false;
+
+  async function toggleRecording() {
+    const recordBtn = document.getElementById('recordBtn');
+    if (!isRecording) {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        mediaRecorder = new MediaRecorder(stream);
+        audioChunks = [];
+        mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
+        mediaRecorder.onstop = async () => {
+          const audioBlob = new Blob(audioChunks, { type: 'audio/mp3' });
+          const reader = new FileReader();
+          reader.readAsDataURL(audioBlob);
+          reader.onloadend = () => {
+            audioBase64 = reader.result;
+            const playback = document.getElementById('audioPlayback');
+            playback.src = audioBase64;
+            playback.classList.remove('hidden');
+          };
+        };
+        mediaRecorder.start();
+        isRecording = true;
+        recordBtn.innerText = "🛑 Stop Recording";
+        recordBtn.classList.add('recording');
+      } catch (err) {
+        alert("Microphone permission denied.");
+      }
+    } else {
+      mediaRecorder.stop();
+      isRecording = false;
+      recordBtn.innerText = "🎤 Start Recording";
+      recordBtn.classList.remove('recording');
+    }
+  }
+
+  async function postMemory() {
+    const type = document.getElementById('typeSelect').value;
+    const statusMsg = document.getElementById('status-msg');
+    let contentData = "";
+
+    if (type === 'text') contentData = document.getElementById('textContent').value;
+    else if (type === 'doodle') contentData = canvas.toDataURL("image/png"); 
+    else if (type === 'voice') contentData = audioBase64;
+
+    if (!contentData || contentData.startsWith("data:image/png;base64,iVBOR000KGgoAAAANSUhEUgAAAUAAAAEwCAYAAADV")) {
+      statusMsg.innerText = "⚠️ Input cannot be empty!";
+      return;
+    }
+
+    statusMsg.innerText = "🚀 Sending to her scrapbook...";
+    const { data, error } = await supabase.from('scrapbook').insert([{ type, content: contentData }]);
+
+    if (error) statusMsg.innerText = "❌ Error: " + error.message;
+    else {
+      statusMsg.innerText = "🎉 Memory saved successfully!";
+      clearCanvas();
+      document.getElementById('textContent').value = "";
+      document.getElementById('audioPlayback').classList.add('hidden');
+      audioBase64 = "";
+    }
+  }
+</script>
+</body>
+</html>
