@@ -8,50 +8,96 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
 </head>
 <body class="ngl-body">
+
     <div class="ngl-container">
         <header class="ngl-header">
-            <div onclick="location.href='index.html'" style="cursor:pointer">◀</div>
-            <div class="ngl-tabs"><span>INBOX</span></div>
-            <div>⚙️</div>
+            <div onclick="location.href='index.html'" class="back-btn">◀</div>
+            <div class="ngl-tabs"><span id="folder-title">INBOX</span></div>
+            <div class="icon">⚙️</div>
         </header>
-        <main id="inbox-list"></main>
+
+        <main id="inbox-list">
+            <div class="loading-state">Loading your memories...</div>
+        </main>
     </div>
 
-    <!-- Popup for viewing the actual note/drawing -->
-    <div id="modal" class="modal hidden" onclick="this.classList.add('hidden')">
+    <div id="modal" class="modal hidden" onclick="closeModal()">
         <div class="modal-content" onclick="event.stopPropagation()">
             <div id="modal-body"></div>
+            <button class="close-btn" onclick="closeModal()">Close</button>
         </div>
     </div>
 
     <script>
+        // REPLACE THESE with your actual Supabase details
         const _supabase = supabase.createClient('YOUR_SUPABASE_URL', 'YOUR_SUPABASE_KEY');
+
+        // Identify which folder we are in
         const urlParams = new URLSearchParams(window.location.search);
-        const folderType = urlParams.get('type');
+        const folderType = urlParams.get('type') || 'text';
+        
+        // Update the header title based on folder
+        const titles = { 'voice': 'VOICE NOTES', 'drawing': 'DOODLES', 'text': 'JUST BECAUSE' };
+        document.getElementById('folder-title').innerText = titles[folderType] || 'INBOX';
 
         async function loadNotes() {
-            const { data } = await _supabase.from('scrapbook')
-                .select('*').eq('type', folderType).order('created_at', { ascending: false });
-            
+            const { data, error } = await _supabase
+                .from('scrapbook')
+                .select('*')
+                .eq('type', folderType)
+                .order('created_at', { ascending: false });
+
             const list = document.getElementById('inbox-list');
+            list.innerHTML = ''; // Clear loading state
+
+            if (error) {
+                list.innerHTML = '<p style="text-align:center; padding:20px;">Error loading memories. Check connection.</p>';
+                return;
+            }
+
+            if (data.length === 0) {
+                list.innerHTML = '<p style="text-align:center; padding:20px; color:#94a3b8;">No memories here yet. 💛</p>';
+                return;
+            }
+
             data.forEach(item => {
                 const card = document.createElement('div');
                 card.className = 'ngl-card';
+                
+                // Truncate text for the inbox preview
+                const previewText = item.type === 'drawing' ? 'Sent a doodle...' : 
+                                   item.type === 'voice' ? 'Sent a voice note...' : 
+                                   item.content;
+
                 card.innerHTML = `
                     <div class="ngl-mail-icon">❤️</div>
                     <div class="ngl-text-content">
-                        <p>${item.type === 'drawing' ? 'Sent a doodle...' : item.content.substring(0,25) + '...'}</p>
+                        <p>${previewText.substring(0, 35)}${previewText.length > 35 ? '...' : ''}</p>
                         <span>${new Date(item.created_at).toLocaleDateString()}</span>
                     </div>
+                    <div class="ngl-arrow">❯</div>
                 `;
-                card.onclick = () => {
-                    const body = document.getElementById('modal-body');
-                    body.innerHTML = item.type === 'drawing' ? `<img src="${item.content}" style="width:100%">` : `<p>${item.content}</p>`;
-                    document.getElementById('modal').classList.remove('hidden');
-                };
+                card.onclick = () => openModal(item);
                 list.appendChild(card);
             });
         }
+
+        function openModal(item) {
+            const body = document.getElementById('modal-body');
+            if (item.type === 'drawing') {
+                body.innerHTML = `<img src="${item.content}" style="width:100%; border-radius:10px;">`;
+            } else if (item.type === 'voice') {
+                body.innerHTML = `<audio controls src="${item.content}" style="width:100%"></audio>`;
+            } else {
+                body.innerHTML = `<p style="color:#333; font-size:1.1rem;">${item.content}</p>`;
+            }
+            document.getElementById('modal').classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('modal').classList.add('hidden');
+        }
+
         loadNotes();
     </script>
 </body>
