@@ -55,7 +55,7 @@
     canvas {
       background: white;
       border-radius: 8px;
-      touch-action: none; /* Stops phone web engine from bouncing while doodling */
+      touch-action: none; /* Prevents phone browser tracking/bouncing while doodling */
       cursor: crosshair;
     }
     .voice-btn { background: #ef4444; color: white; font-weight: bold; margin-bottom: 0; }
@@ -126,42 +126,53 @@
     ctx.lineCap = "round";
     ctx.lineJoin = "round";
     
-    canvas.addEventListener('mousedown', startDrawing);
-    canvas.addEventListener('mouseup', stopDrawing);
-    canvas.addEventListener('mousemove', drawMouse);
+    // Unbinding old mouse/touch events to prevent double-firing
+    canvas.replaceWith(canvas.cloneNode(true));
+    const cleanCanvas = document.getElementById('doodleCanvas');
+    const cleanCtx = cleanCanvas.getContext('2d');
+    cleanCtx.strokeStyle = "#0f172a";
+    cleanCtx.lineWidth = 5;
+    cleanCtx.lineCap = "round";
+    cleanCtx.lineJoin = "round";
 
-    canvas.addEventListener('touchstart', startTouch);
-    canvas.addEventListener('touchend', stopDrawing);
-    canvas.addEventListener('touchmove', drawTouch);
+    cleanCanvas.addEventListener('mousedown', (e) => startDrawing(e, cleanCanvas, cleanCtx));
+    cleanCanvas.addEventListener('mouseup', () => stopDrawing(cleanCtx));
+    cleanCanvas.addEventListener('mousemove', (e) => drawMouse(e, cleanCanvas, cleanCtx));
+
+    cleanCanvas.addEventListener('touchstart', (e) => startTouch(e, cleanCanvas, cleanCtx));
+    cleanCanvas.addEventListener('touchend', () => stopDrawing(cleanCtx));
+    cleanCanvas.addEventListener('touchmove', (e) => drawTouch(e, cleanCanvas, cleanCtx));
   }
 
-  function startDrawing(e) { drawing = true; ctx.beginPath(); drawMouse(e); }
-  function stopDrawing() { drawing = false; ctx.beginPath(); }
+  function startDrawing(e, cvs, cX) { drawing = true; cX.beginPath(); drawMouse(e, cvs, cX); }
+  function stopDrawing(cX) { drawing = false; cX.beginPath(); }
   
-  function drawMouse(e) {
+  function drawMouse(e, cvs, cX) {
     if (!drawing) return;
-    const rect = canvas.getBoundingClientRect();
-    ctx.lineTo(e.clientX - rect.left, e.clientY - rect.top);
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.moveTo(e.clientX - rect.left, e.clientY - rect.top);
+    const rect = cvs.getBoundingClientRect();
+    cX.lineTo(e.clientX - rect.left, e.clientY - rect.top);
+    cX.stroke();
+    cX.beginPath();
+    cX.moveTo(e.clientX - rect.left, e.clientY - rect.top);
   }
 
-  function startTouch(e) { drawing = true; ctx.beginPath(); drawTouch(e); }
+  function startTouch(e, cvs, cX) { drawing = true; cX.beginPath(); drawTouch(e, cvs, cX); }
   
-  function drawTouch(e) {
+  function drawTouch(e, cvs, cX) {
     if (!drawing) return;
     e.preventDefault(); 
-    const rect = canvas.getBoundingClientRect();
+    const rect = cvs.getBoundingClientRect();
     const touch = e.touches[0];
-    ctx.lineTo(touch.clientX - rect.left, touch.clientY - rect.top);
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.moveTo(touch.clientX - rect.left, touch.clientY - rect.top);
+    cX.lineTo(touch.clientX - rect.left, touch.clientY - rect.top);
+    cX.stroke();
+    cX.beginPath();
+    cX.moveTo(touch.clientX - rect.left, touch.clientY - rect.top);
   }
 
   function clearCanvas() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    const cvs = document.getElementById('doodleCanvas');
+    const cX = cvs.getContext('2d');
+    cX.clearRect(0, 0, cvs.width, cvs.height);
   }
 
   // --- VOICE RECORDER ENGINE ---
@@ -211,12 +222,13 @@
   async function postMemory() {
     const type = document.getElementById('typeSelect').value;
     const statusMsg = document.getElementById('status-msg');
+    const cvs = document.getElementById('doodleCanvas');
     let contentData = "";
 
     if (type === 'text') {
       contentData = document.getElementById('textContent').value;
     } else if (type === 'doodle') {
-      contentData = canvas.toDataURL("image/png");
+      contentData = cvs.toDataURL("image/png");
     } else if (type === 'voice') {
       contentData = audioBase64;
     }
