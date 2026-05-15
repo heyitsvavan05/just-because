@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Inbox</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+</head>
+<body class="ngl-body">
+    <div class="ngl-container">
+        <header class="ngl-header">
+            <div onclick="location.href='index.html'" style="cursor:pointer">◀</div>
+            <div class="ngl-tabs"><span>INBOX</span></div>
+            <div>⚙️</div>
+        </header>
+        <main id="inbox-list"></main>
+    </div>
+
+    <!-- Popup for viewing the actual note/drawing -->
+    <div id="modal" class="modal hidden" onclick="this.classList.add('hidden')">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <div id="modal-body"></div>
+        </div>
+    </div>
+
+    <script>
+        const _supabase = supabase.createClient('YOUR_SUPABASE_URL', 'YOUR_SUPABASE_KEY');
+        const urlParams = new URLSearchParams(window.location.search);
+        const folderType = urlParams.get('type');
+
+        async function loadNotes() {
+            const { data } = await _supabase.from('scrapbook')
+                .select('*').eq('type', folderType).order('created_at', { ascending: false });
+            
+            const list = document.getElementById('inbox-list');
+            data.forEach(item => {
+                const card = document.createElement('div');
+                card.className = 'ngl-card';
+                card.innerHTML = `
+                    <div class="ngl-mail-icon">❤️</div>
+                    <div class="ngl-text-content">
+                        <p>${item.type === 'drawing' ? 'Sent a doodle...' : item.content.substring(0,25) + '...'}</p>
+                        <span>${new Date(item.created_at).toLocaleDateString()}</span>
+                    </div>
+                `;
+                card.onclick = () => {
+                    const body = document.getElementById('modal-body');
+                    body.innerHTML = item.type === 'drawing' ? `<img src="${item.content}" style="width:100%">` : `<p>${item.content}</p>`;
+                    document.getElementById('modal').classList.remove('hidden');
+                };
+                list.appendChild(card);
+            });
+        }
+        loadNotes();
+    </script>
+</body>
+</html>
