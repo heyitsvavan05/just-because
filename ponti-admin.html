@@ -42,6 +42,7 @@
     button:active { transform: scale(0.98); }
     
     #canvas-container, #voice-container {
+      display: flex;
       flex-direction: column;
       align-items: center;
       background: #0f172a;
@@ -64,7 +65,7 @@
       display: flex;
       justify-content: center;
       gap: 15px;
-      margin: 12px 0 8px 0;
+      margin: 12px 0 12px 0;
       width: 100%;
     }
     .tool-btn {
@@ -83,27 +84,34 @@
       color: #0f172a;
     }
 
+    /* IG-Style Scrollable Color Palette Box */
+    .color-palette-wrapper {
+      width: 100%;
+      overflow-x: auto;
+      padding: 10px 0;
+      margin-top: 8px;
+      -webkit-overflow-scrolling: touch;
+    }
     .color-palette {
       display: flex;
-      justify-content: center;
-      gap: 10px;
-      margin: 10px 0 5px 0;
-      width: 100%;
-      flex-wrap: wrap;
+      gap: 12px;
+      width: max-content;
+      padding: 2px 10px;
     }
     .color-swatch {
-      width: 28px;
-      height: 28px;
+      width: 30px;
+      height: 30px;
       border-radius: 50%;
       border: 2px solid #334155;
       cursor: pointer;
+      flex-shrink: 0;
       transition: transform 0.1s, border-color 0.1s;
     }
     .color-swatch:active { transform: scale(0.9); }
     .color-swatch.active {
       border-color: #f59e0b;
-      transform: scale(1.15);
-      box-shadow: 0 0 8px rgba(245, 158, 11, 0.5);
+      transform: scale(1.2);
+      box-shadow: 0 0 10px rgba(245, 158, 11, 0.6);
     }
     
     .voice-btn { background: #ef4444; color: white; font-weight: bold; margin-bottom: 0; }
@@ -143,14 +151,23 @@
 
     <canvas id="doodleCanvas" width="350" height="380"></canvas>
     
-    <div class="color-palette">
-      <div class="color-swatch active" style="background: #0f172a;" onclick="changeColor('#0f172a', this)"></div>
-      <div class="color-swatch" style="background: #ef4444;" onclick="changeColor('#ef4444', this)"></div>
-      <div class="color-swatch" style="background: #ec4899;" onclick="changeColor('#ec4899', this)"></div>
-      <div class="color-swatch" style="background: #3b82f6;" onclick="changeColor('#3b82f6', this)"></div>
-      <div class="color-swatch" style="background: #10b981;" onclick="changeColor('#10b981', this)"></div>
-      <div class="color-swatch" style="background: #eab308;" onclick="changeColor('#eab308', this)"></div>
-      <div class="color-swatch" style="background: #a855f7;" onclick="changeColor('#a855f7', this)"></div>
+    <div class="color-palette-wrapper">
+      <div class="color-palette">
+        <div class="color-swatch active" style="background: #0f172a;" onclick="changeColor('#0f172a', this)"></div>
+        <div class="color-swatch" style="background: #ef4444;" onclick="changeColor('#ef4444', this)"></div>
+        <div class="color-swatch" style="background: #ec4899;" onclick="changeColor('#ec4899', this)"></div>
+        <div class="color-swatch" style="background: #f43f5e;" onclick="changeColor('#f43f5e', this)"></div>
+        <div class="color-swatch" style="background: #d946ef;" onclick="changeColor('#d946ef', this)"></div>
+        <div class="color-swatch" style="background: #a855f7;" onclick="changeColor('#a855f7', this)"></div>
+        <div class="color-swatch" style="background: #3b82f6;" onclick="changeColor('#3b82f6', this)"></div>
+        <div class="color-swatch" style="background: #0ea5e9;" onclick="changeColor('#0ea5e9', this)"></div>
+        <div class="color-swatch" style="background: #06b6d4;" onclick="changeColor('#06b6d4', this)"></div>
+        <div class="color-swatch" style="background: #14b8a6;" onclick="changeColor('#14b8a6', this)"></div>
+        <div class="color-swatch" style="background: #10b981;" onclick="changeColor('#10b981', this)"></div>
+        <div class="color-swatch" style="background: #22c55e;" onclick="changeColor('#22c55e', this)"></div>
+        <div class="color-swatch" style="background: #eab308;" onclick="changeColor('#eab308', this)"></div>
+        <div class="color-swatch" style="background: #f97316;" onclick="changeColor('#f97316', this)"></div>
+      </div>
     </div>
 
     <button type="button" onclick="clearCanvas()" style="background: #64748b; color: white; padding: 8px; margin-top: 15px; font-size: 14px; width: auto; border-radius: 6px;">Clear Canvas</button>
@@ -200,6 +217,7 @@
 
   function initCanvas() {
     updateBrushSettings();
+    
     canvas.onmousedown = (e) => { drawing = true; ctx.beginPath(); drawMouse(e); };
     canvas.onmouseup = () => { drawing = false; ctx.beginPath(); };
     canvas.onmousemove = drawMouse;
@@ -250,15 +268,16 @@
     ctx.moveTo(e.clientX - rect.left, e.clientY - rect.top);
   }
   
+  // FIXED coordinate math mapping for fluid finger tracing
   function drawTouch(e) {
     if (!drawing) return;
     e.preventDefault(); 
     const rect = canvas.getBoundingClientRect();
     const touch = e.touches[0];
-    ctx.lineTo(touch.clientX - rect.left, touch.touchY || touch.clientY - rect.top);
+    ctx.lineTo(touch.clientX - rect.left, touch.clientY - rect.top);
     ctx.stroke();
     ctx.beginPath();
-    ctx.moveTo(touch.clientX - rect.left, touch.touchY || touch.clientY - rect.top);
+    ctx.moveTo(touch.clientX - rect.left, touch.clientY - rect.top);
   }
 
   function clearCanvas() {
