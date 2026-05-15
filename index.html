@@ -5,63 +5,24 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Memory Folders</title>
     <link rel="stylesheet" href="style.css">
-    <style>
-        /* Fallback enhancement styles to make the grid pop nicely on phone screens */
-        .folder-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
-            gap: 16px;
-            padding: 20px;
-            width: 100%;
-            max-width: 400px;
-            margin: 0 auto;
-            box-sizing: border-box;
-        }
-        .folder-card {
-            background: #1e293b;
-            border-radius: 16px;
-            padding: 20px;
-            text-align: center;
-            cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.2s;
-            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
-        }
-        .folder-card:active {
-            transform: scale(0.95);
-        }
-        .folder-icon {
-            font-size: 2.5rem;
-            margin-bottom: 8px;
-        }
-        .folder-card p {
-            margin: 0;
-            font-weight: 600;
-            font-size: 14px;
-            color: #cbd5e1;
-        }
-        /* Cute distinct folder tint highlights */
-        .f-voice { border-bottom: 4px solid #ef4444; }
-        .f-doodle { border-bottom: 4px solid #3b82f6; }
-        .f-text { border-bottom: 4px solid #f59e0b; }
-    </style>
 </head>
 <body class="ngl-body">
-    <div class="folder-header" style="text-align: center; padding: 40px 20px 20px 20px;">
-        <h1 style="font-size: 1.6rem; color: #f8fafc; margin-bottom: 8px;">Ponti's Scrapbook</h1>
-        <p style="color: #94a3b8; margin: 0; font-size: 14px;">Your world, split into moments. 💛</p>
+    <div class="folder-header">
+        <h1>Ponti's Just Because Scrapbook for her Baby</h1>
+        <p>Your world, split into moments. 💛</p>
     </div>
 
     <div class="folder-grid">
-        <div class="folder-card f-voice" onclick="location.href='inbox.html?type=voice'">
-            <div class="folder-icon">🎙️</div>
+        <div class="folder-card" onclick="location.href='inbox.html?type=voice'">
+            <div class="folder-icon">📂</div>
             <p>Voice Notes</p>
         </div>
-        <div class="folder-card f-doodle" onclick="location.href='inbox.html?type=drawing'">
-            <div class="folder-icon">🎨</div>
+        <div class="folder-card" onclick="location.href='inbox.html?type=drawing'">
+            <div class="folder-icon">📂</div>
             <p>Doodles</p>
         </div>
-        <div class="folder-card f-text" onclick="location.href='inbox.html?type=text'">
-            <div class="folder-icon">✉️</div>
+        <div class="folder-card" onclick="location.href='inbox.html?type=text'">
+            <div class="folder-icon">📂</div>
             <p>Just Because</p>
         </div>
     </div>
