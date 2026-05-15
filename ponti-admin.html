@@ -1,99 +1,225 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Ponti Admin</title>
-    <link rel="stylesheet" href="style.css">
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ponti Admin Panel</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    body {
+      background-color: #111827;
+      color: #f3f4f6;
+      font-family: sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+      margin: 0;
+    }
+    .container {
+      width: 100%;
+      max-width: 400px;
+      background: #1f2937;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    }
+    h2 { text-align: center; color: #f59e0b; }
+    select, textarea, button {
+      width: 100%;
+      padding: 12px;
+      margin: 10px 0;
+      border-radius: 8px;
+      border: none;
+      font-size: 16px;
+    }
+    select, textarea { background: #374151; color: white; }
+    textarea { height: 120px; resize: none; }
+    button { background: #f59e0b; color: #111827; font-weight: bold; cursor: pointer; }
+    button:active { transform: scale(0.98); }
+    
+    /* Dynamic Feature Blocks */
+    .hidden { display: none !important; }
+    #canvas-container, #voice-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      background: #111827;
+      padding: 10px;
+      border-radius: 8px;
+      margin: 10px 0;
+    }
+    canvas {
+      background: white;
+      border-radius: 8px;
+      touch-action: none; /* Prevents mobile scrolling while drawing */
+    }
+    .voice-btn { background: #ef4444; color: white; }
+    .recording { animation: pulse 1.5s infinite; }
+    @keyframes pulse {
+      0% { opacity: 1; }
+      50% { opacity: 0.5; }
+      100% { opacity: 1; }
+    }
+    #status-msg { text-align: center; margin-top: 10px; font-size: 14px; color: #9ca3af; }
+  </style>
 </head>
-<body class="ngl-body">
+<body>
 
-    <div class="admin-container">
-        <h2 style="color: var(--accent-yellow); margin-bottom: 20px;">Send a Memory</h2>
-        
-        <select id="msg-type" class="admin-input" onchange="toggleInputs()">
-            <option value="text">Just Because (Text)</option>
-            <option value="voice">Voice Note (Link)</option>
-            <option value="drawing">Doodle (Link)</option>
-        </select>
+<div class="container">
+  <h2>Send a Memory</h2>
+  
+  <label for="typeSelect">Memory Type:</label>
+  <select id="typeSelect" onchange="toggleInputs()">
+    <option value="text">Just Because (Text)</option>
+    <option value="doodle">Doodle (Draw Now)</option>
+    <option value="voice">Voice Note (Record Now)</option>
+  </select>
 
-        <textarea id="msg-content" class="admin-input" placeholder="What's on your mind?"></textarea>
+  <textarea id="textContent" placeholder="Type your message here..."></textarea>
 
-        <input type="text" id="msg-link" class="admin-input hidden" placeholder="Paste URL here...">
+  <div id="canvas-container" class="hidden">
+    <canvas id="doodleCanvas" width="320" height="300"></canvas>
+    <button type="button" onclick="clearCanvas()" style="background: #4b5563; color: white; padding: 6px;">Clear Canvas</button>
+  </div>
 
-        <button id="send-btn" class="close-btn" style="width:100%; margin-top:20px;" onclick="sendToSupabase()">Post Memory</button>
-        
-        <p id="status" style="margin-top:20px; font-size:0.9rem; color: var(--text-dim);"></p>
-        
-        <button onclick="location.href='index.html'" style="background:none; border:none; color:white; margin-top:30px; opacity:0.5;">View Live Site</button>
-    </div>
+  <div id="voice-container" class="hidden">
+    <button type="button" id="recordBtn" class="voice-btn" onclick="toggleRecording()">🎤 Start Recording</button>
+    <audio id="audioPlayback" controls class="hidden" style="margin-top:10px; width:100%;"></audio>
+  </div>
 
-    <style>
-        .admin-input {
-            width: 100%;
-            background: #1f2937;
-            border: 1px solid #2d3748;
-            color: white;
-            padding: 15px;
-            border-radius: 12px;
-            margin-bottom: 10px;
-            font-size: 1rem;
-        }
-        textarea { height: 150px; resize: none; }
-    </style>
+  <button id="submitBtn" onclick="postMemory()">Post Memory</button>
+  <p id="status-msg"></p>
+</div>
 
-    <script>
-        const _supabase = supabase.createClient(
-            'https://kucwhpkcpfadsdrqvxjv.supabase.co', 
-            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt1Y3docGtjcGZhZHNkcnF2eGp2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4NjQ2NzAsImV4cCI6MjA5NDQ0MDY3MH0.PIUz00Qm_r6NkCKL8I4XQSSmvR02qt2VPwJQVY2s2qg'
-        );
+<script>
+  // TODO: Replace with your actual Supabase credentials
+  const SUPABASE_URL = "https://your-supabase-url.supabase.co";
+  const SUPABASE_KEY = "your-anon-key";
+  const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        function toggleInputs() {
-            const type = document.getElementById('msg-type').value;
-            const textInput = document.getElementById('msg-content');
-            const linkInput = document.getElementById('msg-link');
-            
-            if (type === 'text') {
-                textInput.classList.remove('hidden');
-                linkInput.classList.add('hidden');
-            } else {
-                textInput.classList.add('hidden');
-                linkInput.classList.remove('hidden');
-            }
-        }
+  // Dynamic Input Toggle
+  function toggleInputs() {
+    const type = document.getElementById('typeSelect').value;
+    document.getElementById('textContent').classList.toggle('hidden', type !== 'text');
+    document.getElementById('canvas-container').classList.toggle('hidden', type !== 'doodle');
+    document.getElementById('voice-container').classList.toggle('hidden', type !== 'voice');
+    
+    if (type === 'doodle') initCanvas();
+  }
 
-        async function sendToSupabase() {
-            const btn = document.getElementById('send-btn');
-            const status = document.getElementById('status');
-            const type = document.getElementById('msg-type').value;
-            const content = (type === 'text') ? document.getElementById('msg-content').value : document.getElementById('msg-link').value;
+  // --- DOODLE ENGINE ---
+  const canvas = document.getElementById('doodleCanvas');
+  const ctx = canvas.getContext('2d');
+  let drawing = false;
 
-            if (!content) {
-                alert("Please add some content first!");
-                return;
-            }
+  function initCanvas() {
+    ctx.strokeStyle = "#111827"; // Dark ink color
+    ctx.lineWidth = 4;
+    ctx.lineCap = "round";
+    
+    // Mouse Event Listeners
+    canvas.addEventListener('mousedown', () => drawing = true);
+    canvas.addEventListener('mouseup', () => { drawing = false; ctx.beginPath(); });
+    canvas.addEventListener('mousemove', draw);
 
-            btn.disabled = true;
-            btn.innerText = "Sending...";
-            status.innerText = "Connecting to database...";
+    // Touch Event Listeners for Mobile Touchscreens
+    canvas.addEventListener('touchstart', (e) => { drawing = true; draw(e.touches[0]); });
+    canvas.addEventListener('touchend', () => { drawing = false; ctx.beginPath(); });
+    canvas.addEventListener('touchmove', (e) => { e.preventDefault(); draw(e.touches[0]); });
+  }
 
-            const { error } = await _supabase
-                .from('scrapbook')
-                .insert([{ type: type, content: content }]);
+  function draw(e) {
+    if (!drawing) return;
+    const rect = canvas.getBoundingClientRect();
+    const x = (e.clientX || e.pageX) - rect.left;
+    const y = (e.clientY || e.pageY) - rect.top;
+    
+    ctx.lineTo(x, y);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+  }
 
-            if (error) {
-                status.innerText = "Error: " + error.message;
-                btn.disabled = false;
-                btn.innerText = "Post Memory";
-            } else {
-                status.innerText = "Memory Saved Successfully! ❤️";
-                btn.innerText = "Post Another";
-                btn.disabled = false;
-                document.getElementById('msg-content').value = '';
-                document.getElementById('msg-link').value = '';
-            }
-        }
-    </script>
+  function clearCanvas() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+  }
+
+  // --- VOICE ENGINE ---
+  let mediaRecorder;
+  let audioChunks = [];
+  let audioBase64 = "";
+  let isRecording = false;
+
+  async function toggleRecording() {
+    const recordBtn = document.getElementById('recordBtn');
+    
+    if (!isRecording) {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      mediaRecorder = new MediaRecorder(stream);
+      audioChunks = [];
+
+      mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
+      mediaRecorder.onstop = async () => {
+        const audioBlob = new Blob(audioChunks, { type: 'audio/mp3' });
+        const reader = new FileReader();
+        reader.readAsDataURL(audioBlob);
+        reader.onloadend = () => {
+          audioBase64 = reader.result; // Base64 string ready
+          const playback = document.getElementById('audioPlayback');
+          playback.src = audioBase64;
+          playback.classList.remove('hidden');
+        };
+      };
+
+      mediaRecorder.start();
+      isRecording = true;
+      recordBtn.innerText = "🛑 Stop Recording";
+      recordBtn.classList.add('recording');
+    } else {
+      mediaRecorder.stop();
+      isRecording = false;
+      recordBtn.innerText = "🎤 Start Recording";
+      recordBtn.classList.remove('recording');
+    }
+  }
+
+  // --- SUBMIT TO SUPABASE ---
+  async function postMemory() {
+    const type = document.getElementById('typeSelect').value;
+    const statusMsg = document.getElementById('status-msg');
+    let contentData = "";
+
+    if (type === 'text') {
+      contentData = document.getElementById('textContent').value;
+    } else if (type === 'doodle') {
+      contentData = canvas.toDataURL("image/png"); // Converts drawing to Base64 Text
+    } else if (type === 'voice') {
+      contentData = audioBase64; // Contains recorded audio Base64 Text
+    }
+
+    if (!contentData || contentData === "data:image/png;base64,iVBOR000KGgoAAAANSUhEUgAAAUAAAAEwCAYAAADV...") {
+      statusMsg.innerText = "Error: Input cannot be empty!";
+      return;
+    }
+
+    statusMsg.innerText = "Sending memory...";
+
+    const { data, error } = await supabase
+      .from('scrapbook')
+      .insert([{ type: type, content: contentData }]);
+
+    if (error) {
+      statusMsg.innerText = "Error: " + error.message;
+    } else {
+      statusMsg.innerText = "Memory saved successfully! 🎉";
+      clearCanvas();
+      document.getElementById('textContent').value = "";
+      document.getElementById('audioPlayback').classList.add('hidden');
+      audioBase64 = "";
+    }
+  }
+</script>
+
 </body>
 </html>
