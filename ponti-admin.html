@@ -55,7 +55,7 @@
     canvas {
       background: white;
       border-radius: 8px;
-      touch-action: none; /* Crucial: stops your phone from scrolling while drawing */
+      touch-action: none; /* Stops phone web engine from bouncing while doodling */
       cursor: crosshair;
     }
     .voice-btn { background: #ef4444; color: white; font-weight: bold; margin-bottom: 0; }
@@ -106,7 +106,6 @@
   const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt1Y3docGtjcGZhZHNkcnF2eGp2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4NjQ2NzAsImV4cCI6MjA5NDQ0MDY3MH0.PIUz00Qm_r6NkCKL8I4XQSSmvR02qt2VPwJQVY2s2qg";
   const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-  // Switch display elements based on what dropdown choice you select
   function toggleInputs() {
     const type = document.getElementById('typeSelect').value;
     document.getElementById('text-container').classList.toggle('hidden', type !== 'text');
@@ -116,23 +115,21 @@
     if (type === 'doodle') initCanvas();
   }
 
-  // --- DOODLE DRAWING ENGINE ---
+  // --- DOODLE ENGINE ---
   const canvas = document.getElementById('doodleCanvas');
   const ctx = canvas.getContext('2d');
   let drawing = false;
 
   function initCanvas() {
-    ctx.strokeStyle = "#0f172a"; // Dark blue/black ink
+    ctx.strokeStyle = "#0f172a";
     ctx.lineWidth = 5;
     ctx.lineCap = "round";
     ctx.lineJoin = "round";
     
-    // Mouse drawing setups
     canvas.addEventListener('mousedown', startDrawing);
     canvas.addEventListener('mouseup', stopDrawing);
     canvas.addEventListener('mousemove', drawMouse);
 
-    // Mobile touch drawing setups
     canvas.addEventListener('touchstart', startTouch);
     canvas.addEventListener('touchend', stopDrawing);
     canvas.addEventListener('touchmove', drawTouch);
@@ -154,7 +151,7 @@
   
   function drawTouch(e) {
     if (!drawing) return;
-    e.preventDefault(); // Prevents page from turning or shaking while doodling
+    e.preventDefault(); 
     const rect = canvas.getBoundingClientRect();
     const touch = e.touches[0];
     ctx.lineTo(touch.clientX - rect.left, touch.clientY - rect.top);
@@ -188,7 +185,7 @@
           const reader = new FileReader();
           reader.readAsDataURL(audioBlob);
           reader.onloadend = () => {
-            audioBase64 = reader.result; // Audio is now a string!
+            audioBase64 = reader.result;
             const playback = document.getElementById('audioPlayback');
             playback.src = audioBase64;
             playback.classList.remove('hidden');
@@ -210,7 +207,7 @@
     }
   }
 
-  // --- SEND RECORD TO SUPABASE ---
+  // --- SUBMITTER ---
   async function postMemory() {
     const type = document.getElementById('typeSelect').value;
     const statusMsg = document.getElementById('status-msg');
@@ -219,7 +216,7 @@
     if (type === 'text') {
       contentData = document.getElementById('textContent').value;
     } else if (type === 'doodle') {
-      contentData = canvas.toDataURL("image/png"); // Canvas drawing is now an image string!
+      contentData = canvas.toDataURL("image/png");
     } else if (type === 'voice') {
       contentData = audioBase64;
     }
