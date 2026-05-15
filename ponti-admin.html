@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Post Memory</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body style="padding: 20px;">
+    <h2>Post New Memory</h2>
+    <select id="typeSelect" style="width:100%; padding:10px; margin-bottom:10px;">
+        <option value="text">Just Because (Text/Photo)</option>
+        <option value="drawing">Doodle</option>
+        <option value="voice">Voice Note</option>
+    </select>
+    <textarea id="contentInput" style="width:100%; height:150px; margin-bottom:15px; border-radius:10px; padding:10px;" placeholder="Type message or paste image/voice link..."></textarea>
+    <button onclick="save()" style="width:100%; padding:15px; background:var(--yellow); border:none; border-radius:10px; font-weight:bold; color:black; cursor:pointer;">Post & Notify WhatsApp 🚀</button>
+
+    <script>
+        const _supabase = supabase.createClient('YOUR_SUPABASE_URL', 'YOUR_SUPABASE_KEY');
+        async function save() {
+            const type = document.getElementById('typeSelect').value;
+            const content = document.getElementById('contentInput').value;
+            const { error } = await _supabase.from('scrapbook').insert([{ type, content }]);
+            if (!error) {
+                alert("Memory Saved! WhatsApp notification triggered.");
+                document.getElementById('contentInput').value = '';
+            } else {
+                alert("Error saving: " + error.message);
+            }
+        }
+    </script>
+</body>
+</html>
