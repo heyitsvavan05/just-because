@@ -1,0 +1,27 @@
+:root { 
+    --bg: #121826; /* NGL Inbox Background */
+    --card: #1f2937; 
+    --yellow: #fde047; 
+}
+
+body { background: var(--bg); color: white; margin: 0; font-family: sans-serif; overflow-x: hidden; }
+.hidden { display: none; }
+
+/* FOLDER HOME STYLES */
+.folder-header { text-align: center; padding: 50px 20px; }
+.folder-header h1 { color: var(--yellow); font-size: 1.5rem; margin-bottom: 10px; }
+.folder-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; padding: 20px; max-width: 500px; margin: 0 auto; }
+.folder-card { background: var(--card); border-radius: 20px; padding: 30px 10px; text-align: center; cursor: pointer; transition: transform 0.2s; }
+.folder-card:active { transform: scale(0.95); }
+.folder-icon { font-size: 2.5rem; margin-bottom: 10px; }
+
+/* INBOX LIST STYLES */
+.ngl-header { display: flex; justify-content: space-between; padding: 1.5rem; border-bottom: 1px solid #2d3748; }
+.ngl-card { display: flex; align-items: center; padding: 1rem; border-bottom: 1px solid #2d3748; cursor: pointer; }
+.ngl-mail-icon { width: 50px; height: 50px; background: var(--card); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-right: 15px; }
+.ngl-text-content p { font-weight: 600; font-size: 0.9rem; margin: 0; }
+.ngl-text-content span { color: #94a3b8; font-size: 0.8rem; }
+
+/* POPUP MODAL */
+.modal { position: fixed; top: 0; background: rgba(0,0,0,0.9); width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; z-index: 1000; }
+.modal-content { background: var(--card); padding: 30px; border-radius: 20px; width: 85%; max-width: 400px; text-align: center; }
