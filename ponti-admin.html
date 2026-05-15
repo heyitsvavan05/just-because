@@ -55,7 +55,7 @@
     canvas {
       background: white;
       border-radius: 8px;
-      touch-action: none; /* Stops the screen from scrolling/bouncing while you draw */
+      touch-action: none;
       cursor: crosshair;
     }
     .voice-btn { background: #ef4444; color: white; font-weight: bold; margin-bottom: 0; }
@@ -114,7 +114,6 @@
     if (type === 'doodle') initCanvas();
   }
 
-  // --- INSTAGRAM DOODLE ENGINE ---
   const canvas = document.getElementById('doodleCanvas');
   const ctx = canvas.getContext('2d');
   let drawing = false;
@@ -163,7 +162,6 @@
     ctx.clearRect(0, 0, canvas.width, canvas.height);
   }
 
-  // --- AUDIO ENGINE ---
   let mediaRecorder;
   let audioChunks = [];
   let audioBase64 = "";
@@ -203,14 +201,13 @@
     }
   }
 
-  // --- DATABASE SUBMISSION ---
   async function postMemory() {
     const type = document.getElementById('typeSelect').value;
     const statusMsg = document.getElementById('status-msg');
     let contentData = "";
 
     if (type === 'text') contentData = document.getElementById('textContent').value;
-    else if (type === 'doodle') contentData = canvas.toDataURL("image/png"); // Saves drawing as PNG sticker data!
+    else if (type === 'doodle') contentData = canvas.toDataURL("image/png"); 
     else if (type === 'voice') contentData = audioBase64;
 
     if (!contentData || contentData.startsWith("data:image/png;base64,iVBOR000KGgoAAAANSUhEUgAAAUAAAAEwCAYAAADV")) {
