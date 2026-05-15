@@ -41,10 +41,7 @@
     button { background: #f59e0b; color: #0f172a; font-weight: bold; cursor: pointer; margin-bottom: 0; }
     button:active { transform: scale(0.98); }
     
-    .hidden { display: none !important; }
-    
     #canvas-container, #voice-container {
-      display: flex;
       flex-direction: column;
       align-items: center;
       background: #0f172a;
@@ -80,20 +77,20 @@
     <option value="voice">Voice Note (Record Now)</option>
   </select>
 
-  <div id="text-container">
+  <div id="text-container" style="display: block;">
     <label for="textContent">Your Message:</label>
     <textarea id="textContent" placeholder="Type your message here..."></textarea>
   </div>
 
-  <div id="canvas-container" class="hidden">
+  <div id="canvas-container" style="display: none;">
     <label style="margin-bottom: 8px; display: block;">Draw with your finger:</label>
     <canvas id="doodleCanvas" width="320" height="320"></canvas>
     <button type="button" onclick="clearCanvas()" style="background: #64748b; color: white; padding: 8px; margin-top: 10px; font-size: 14px; width: auto;">Clear Canvas</button>
   </div>
 
-  <div id="voice-container" class="hidden">
+  <div id="voice-container" style="display: none;">
     <button type="button" id="recordBtn" class="voice-btn" onclick="toggleRecording()">🎤 Start Recording</button>
-    <audio id="audioPlayback" controls class="hidden" style="margin-top: 15px; width: 100%;"></audio>
+    <audio id="audioPlayback" controls style="display: none; margin-top: 15px; width: 100%;"></audio>
   </div>
 
   <button id="submitBtn" onclick="postMemory()">Post Memory</button>
@@ -103,17 +100,29 @@
 <script>
   const SUPABASE_URL = "https://kucwhpkcpfadsdrqvxjv.supabase.co";
   const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt1Y3docGtjcGZhZHNkcnF2eGp2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4NjQ2NzAsImV4cCI6MjA5NDQ0MDY3MH0.PIUz00Qm_r6NkCKL8I4XQSSmvR02qt2VPwJQVY2s2qg";
-  
-  // FIXED: Renamed local client instance to '_supabase' to prevent crashing the script initialization!
   const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+  // Bulletproof Display Switching using Direct Styles
   function toggleInputs() {
     const type = document.getElementById('typeSelect').value;
-    document.getElementById('text-container').classList.toggle('hidden', type !== 'text');
-    document.getElementById('canvas-container').classList.toggle('hidden', type !== 'doodle');
-    document.getElementById('voice-container').classList.toggle('hidden', type !== 'voice');
-    
-    if (type === 'doodle') initCanvas();
+    const txtBox = document.getElementById('text-container');
+    const cvsBox = document.getElementById('canvas-container');
+    const vceBox = document.getElementById('voice-container');
+
+    if (type === 'text') {
+      txtBox.style.display = 'block';
+      cvsBox.style.display = 'none';
+      vceBox.style.display = 'none';
+    } else if (type === 'doodle') {
+      txtBox.style.display = 'none';
+      cvsBox.style.display = 'flex';
+      vceBox.style.display = 'none';
+      initCanvas();
+    } else if (type === 'voice') {
+      txtBox.style.display = 'none';
+      cvsBox.style.display = 'none';
+      vceBox.style.display = 'flex';
+    }
   }
 
   const canvas = document.getElementById('doodleCanvas');
@@ -126,7 +135,6 @@
     ctx.lineCap = "round";
     ctx.lineJoin = "round";
     
-    // Direct assignment to keep event mapping simple and rock-solid on mobile webview containers
     canvas.onmousedown = (e) => { drawing = true; ctx.beginPath(); drawMouse(e); };
     canvas.onmouseup = () => { drawing = false; ctx.beginPath(); };
     canvas.onmousemove = drawMouse;
@@ -181,7 +189,7 @@
             audioBase64 = reader.result;
             const playback = document.getElementById('audioPlayback');
             playback.src = audioBase64;
-            playback.classList.remove('hidden');
+            playback.style.display = 'block';
           };
         };
         mediaRecorder.start();
@@ -221,7 +229,7 @@
       statusMsg.innerText = "🎉 Memory saved successfully!";
       clearCanvas();
       document.getElementById('textContent').value = "";
-      document.getElementById('audioPlayback').classList.add('hidden');
+      document.getElementById('audioPlayback').style.display = 'none';
       audioBase64 = "";
     }
   }
