@@ -122,6 +122,13 @@
       100% { opacity: 1; }
     }
     #status-msg { text-align: center; margin-top: 15px; font-size: 14px; color: #cbd5e1; font-weight: bold; }
+    
+    /* WhatsApp Button Styles */
+    .whatsapp-btn {
+      background: #25D366;
+      color: white;
+      margin-top: 12px;
+    }
   </style>
 </head>
 <body>
@@ -179,6 +186,9 @@
   </div>
 
   <button id="submitBtn" onclick="postMemory()">Post Memory</button>
+  
+  <button id="waBtn" class="whatsapp-btn" onclick="sendWhatsAppNotification()">📱 Test WhatsApp Notification</button>
+  
   <p id="status-msg"></p>
 </div>
 
@@ -268,7 +278,6 @@
     ctx.moveTo(e.clientX - rect.left, e.clientY - rect.top);
   }
   
-  // FIXED mobile touch tracking
   function drawTouch(e) {
     if (!drawing) return;
     e.preventDefault(); 
@@ -293,7 +302,6 @@
     const recordBtn = document.getElementById('recordBtn');
     if (!isRecording) {
       try {
-        // High-fidelity microphone setup (Underwater filter removed!)
         const stream = await navigator.mediaDevices.getUserMedia({ 
           audio: {
             echoCancellation: false,
@@ -355,6 +363,18 @@
       document.getElementById('audioPlayback').style.display = 'none';
       audioBase64 = "";
     }
+  }
+
+  function sendWhatsAppNotification() {
+    // Hardcoded with your verified test format (+63 977 753 9573 formatting mapped cleanly)
+    const testNumber = "639777539573"; 
+    
+    const message = "Hey Bebi! I just dropped a something into your jar. Go check it! 🌌";
+    const encodedMessage = encodeURIComponent(message);
+    
+    const waLink = `https://api.whatsapp.com/send?phone=${testNumber}&text=${encodedMessage}`;
+    
+    window.open(waLink, '_blank');
   }
 </script>
 </body>
