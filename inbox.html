@@ -29,8 +29,9 @@
     </div>
 
     <script>
+        // FIXED Live Connection Configuration
         const SUPABASE_URL = "https://kucwhpkcpfadsdrqvxjv.supabase.co";
-        const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt1Y3docPkjcGZhZHNkcnF2eGp2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4NjQ2NzAsImV4cCI6MjA5NDQ0MDY3MH0.PIUz00Qm_r6NkCKL8I4XQSSmvR02qt2VPwJQVY2s2qg";
+        const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt1Y3docGtjcGZhZHNkcnF2eGp2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4NjQ2NzAsImV4cCI6MjA5NDQ0MDY3MH0.PIUz00Qm_r6NkCKL8I4XQSSmvR02qt2VPwJQVY2s2qg";
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         const urlParams = new URLSearchParams(window.location.search);
