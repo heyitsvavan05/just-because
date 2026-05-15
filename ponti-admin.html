@@ -2,32 +2,96 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin - Post Memory</title>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Ponti Admin</title>
     <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
 </head>
-<body style="padding: 20px;">
-    <h2>Post New Memory</h2>
-    <select id="typeSelect" style="width:100%; padding:10px; margin-bottom:10px;">
-        <option value="text">Just Because (Text/Photo)</option>
-        <option value="drawing">Doodle</option>
-        <option value="voice">Voice Note</option>
-    </select>
-    <textarea id="contentInput" style="width:100%; height:150px; margin-bottom:15px; border-radius:10px; padding:10px;" placeholder="Type message or paste image/voice link..."></textarea>
-    <button onclick="save()" style="width:100%; padding:15px; background:var(--yellow); border:none; border-radius:10px; font-weight:bold; color:black; cursor:pointer;">Post & Notify WhatsApp 🚀</button>
+<body class="ngl-body">
+
+    <div class="admin-container">
+        <h2 style="color: var(--accent-yellow); margin-bottom: 20px;">Send a Memory</h2>
+        
+        <select id="msg-type" class="admin-input" onchange="toggleInputs()">
+            <option value="text">Just Because (Text)</option>
+            <option value="voice">Voice Note (Link)</option>
+            <option value="drawing">Doodle (Link)</option>
+        </select>
+
+        <textarea id="msg-content" class="admin-input" placeholder="What's on your mind?"></textarea>
+
+        <input type="text" id="msg-link" class="admin-input hidden" placeholder="Paste URL here...">
+
+        <button id="send-btn" class="close-btn" style="width:100%; margin-top:20px;" onclick="sendToSupabase()">Post Memory</button>
+        
+        <p id="status" style="margin-top:20px; font-size:0.9rem; color: var(--text-dim);"></p>
+        
+        <button onclick="location.href='index.html'" style="background:none; border:none; color:white; margin-top:30px; opacity:0.5;">View Live Site</button>
+    </div>
+
+    <style>
+        .admin-input {
+            width: 100%;
+            background: #1f2937;
+            border: 1px solid #2d3748;
+            color: white;
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 10px;
+            font-size: 1rem;
+        }
+        textarea { height: 150px; resize: none; }
+    </style>
 
     <script>
-        const _supabase = supabase.createClient('YOUR_SUPABASE_URL', 'YOUR_SUPABASE_KEY');
-        async function save() {
-            const type = document.getElementById('typeSelect').value;
-            const content = document.getElementById('contentInput').value;
-            const { error } = await _supabase.from('scrapbook').insert([{ type, content }]);
-            if (!error) {
-                alert("Memory Saved! WhatsApp notification triggered.");
-                document.getElementById('contentInput').value = '';
+        const _supabase = supabase.createClient(
+            'https://kucwhpkcpfadsdrqvxjv.supabase.co', 
+            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt1Y3docGtjcGZhZHNkcnF2eGp2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4NjQ2NzAsImV4cCI6MjA5NDQ0MDY3MH0.PIUz00Qm_r6NkCKL8I4XQSSmvR02qt2VPwJQVY2s2qg'
+        );
+
+        function toggleInputs() {
+            const type = document.getElementById('msg-type').value;
+            const textInput = document.getElementById('msg-content');
+            const linkInput = document.getElementById('msg-link');
+            
+            if (type === 'text') {
+                textInput.classList.remove('hidden');
+                linkInput.classList.add('hidden');
             } else {
-                alert("Error saving: " + error.message);
+                textInput.classList.add('hidden');
+                linkInput.classList.remove('hidden');
+            }
+        }
+
+        async function sendToSupabase() {
+            const btn = document.getElementById('send-btn');
+            const status = document.getElementById('status');
+            const type = document.getElementById('msg-type').value;
+            const content = (type === 'text') ? document.getElementById('msg-content').value : document.getElementById('msg-link').value;
+
+            if (!content) {
+                alert("Please add some content first!");
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerText = "Sending...";
+            status.innerText = "Connecting to database...";
+
+            const { error } = await _supabase
+                .from('scrapbook')
+                .insert([{ type: type, content: content }]);
+
+            if (error) {
+                status.innerText = "Error: " + error.message;
+                btn.disabled = false;
+                btn.innerText = "Post Memory";
+            } else {
+                status.innerText = "Memory Saved Successfully! ❤️";
+                btn.innerText = "Post Another";
+                btn.disabled = false;
+                document.getElementById('msg-content').value = '';
+                document.getElementById('msg-link').value = '';
             }
         }
     </script>
