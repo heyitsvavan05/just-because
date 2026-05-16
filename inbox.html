@@ -160,7 +160,7 @@ h3 {
 <body>
 
 <div class="container">
-  
+
   <div class="back-link">
     <a href="index.html">⬅️ Back to Jar</a>
   </div>
@@ -203,7 +203,7 @@ function switchFolder(folderType) {
   document.querySelectorAll('.tab-btn').forEach(btn => {
     btn.classList.remove('active');
   });
-  
+
   // 2. Light up the specific target tab bubble
   const activeTab = document.getElementById(`tab-${folderType}`);
   if (activeTab) {
@@ -264,7 +264,8 @@ async function loadMemories() {
   });
 }
 
-function openMemory(item) {
+// UPDATED: Now marks items as read on click
+async function openMemory(item) {
   const body = document.getElementById("modal-body");
 
   if (item.type === "doodle") {
@@ -276,6 +277,14 @@ function openMemory(item) {
   }
 
   document.getElementById("modal").style.display = "flex";
+
+  // FIX: If the item is unread, update it in Supabase right now!
+  if (item.is_read === false || item.is_read === null) {
+    await sb
+      .from("scrapbook")
+      .update({ is_read: true })
+      .eq("id", item.id);
+  }
 }
 
 function closeModal() {
