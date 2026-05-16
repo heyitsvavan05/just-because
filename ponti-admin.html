@@ -1,513 +1,218 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Ponti Admin Panel</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  
-  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
-  <script>
-    (function() {
-        // Your active Public Key configuration
-        emailjs.init("s8i1NnlReuRH6jqdF"); 
-    })();
-  </script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Ponti Admin Panel</title>
 
-  <style>
-    body {
-      background-color: #0f172a;
-      color: #f8fafc;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 20px;
-      margin: 0;
-    }
-    .container {
-      width: 100%;
-      max-width: 400px;
-      background: #1e293b;
-      padding: 24px;
-      border-radius: 16px;
-      box-shadow: 0 10px 25px -5px rgba(0,0,0,0.3);
-      box-sizing: border-box;
-      margin-bottom: 25px;
-    }
-    h2 { text-align: center; color: #f59e0b; margin-top: 0; margin-bottom: 20px; }
-    h3 { color: #f59e0b; margin-top: 5px; margin-bottom: 15px; font-size: 18px; }
-    label { font-size: 14px; color: #94a3b8; font-weight: 600; }
-    select, textarea, button {
-      width: 100%;
-      padding: 14px;
-      margin: 8px 0 20px 0;
-      border-radius: 8px;
-      border: none;
-      font-size: 16px;
-      box-sizing: border-box;
-    }
-    select, textarea { background: #334155; color: white; }
-    textarea { height: 120px; resize: none; margin-bottom: 20px; }
-    button { background: #f59e0b; color: #0f172a; font-weight: bold; cursor: pointer; margin-bottom: 0; }
-    button:active { transform: scale(0.98); }
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
 
-    #canvas-container, #voice-container {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      background: #0f172a;
-      padding: 12px;
-      border-radius: 12px;
-      margin: 8px 0 20px 0;
-    }
+<script>
+(function() {
+    emailjs.init("s8i1NnlReuRH6jqdF");
+})();
+</script>
 
-    canvas {
-      background: white;
-      border-radius: 12px;
-      touch-action: none;
-      cursor: crosshair;
-      max-width: 100%;
-      box-shadow: inset 0 0 10px rgba(0,0,0,0.1);
-    }
+<style>
+body {
+  background-color: #0f172a;
+  color: #f8fafc;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px;
+  margin: 0;
+}
 
-    .brush-tools {
-      display: flex;
-      justify-content: center;
-      gap: 15px;
-      margin: 12px 0 12px 0;
-      width: 100%;
-    }
-    .tool-btn {
-      background: #334155;
-      color: #94a3b8;
-      padding: 8px 16px;
-      border-radius: 20px;
-      font-size: 14px;
-      font-weight: bold;
-      cursor: pointer;
-      width: auto;
-      margin: 0;
-    }
-    .tool-btn.active {
-      background: #f59e0b;
-      color: #0f172a;
-    }
+.container {
+  width: 100%;
+  max-width: 400px;
+  background: #1e293b;
+  padding: 24px;
+  border-radius: 16px;
+  box-shadow: 0 10px 25px -5px rgba(0,0,0,0.3);
+  box-sizing: border-box;
+  margin-bottom: 20px;
+}
 
-    .color-palette-wrapper {
-      width: 100%;
-      overflow-x: auto;
-      padding: 10px 0;
-      margin-top: 8px;
-      -webkit-overflow-scrolling: touch;
-    }
-    .color-palette {
-      display: flex;
-      gap: 12px;
-      width: max-content;
-      padding: 2px 10px;
-    }
-    .color-swatch {
-      width: 30px;
-      height: 30px;
-      border-radius: 50%;
-      border: 2px solid #334155;
-      cursor: pointer;
-      flex-shrink: 0;
-      transition: transform 0.1s, border-color 0.1s;
-    }
-    .color-swatch:active { transform: scale(0.9); }
-    .color-swatch.active {
-      border-color: #f59e0b;
-      transform: scale(1.2);
-      box-shadow: 0 0 10px rgba(245, 158, 11, 0.6);
-    }
+h2 { text-align: center; color: #f59e0b; margin-bottom: 10px; }
+h3 { color: #f59e0b; margin-bottom: 10px; }
 
-    .voice-btn { background: #ef4444; color: white; font-weight: bold; margin-bottom: 0; }
-    .recording { animation: pulse 1.5s infinite; background: #b91c1c; }
-    @keyframes pulse {
-      0% { opacity: 1; }
-      50% { opacity: 0.6; }
-      100% { opacity: 1; }
-    }
-    #status-msg { text-align: center; margin-top: 15px; font-size: 14px; color: #cbd5e1; font-weight: bold; }
+label { font-size: 14px; color: #94a3b8; font-weight: 600; }
 
-    .manager-card {
-      width: 100%;
-      max-width: 400px;
-      background: #1e293b;
-      padding: 20px;
-      border-radius: 16px;
-      box-shadow: 0 10px 25px -5px rgba(0,0,0,0.3);
-      box-sizing: border-box;
-    }
-    .memory-list {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-      max-height: 400px;
-      overflow-y: auto;
-      padding-right: 4px;
-    }
-    .memory-item {
-      background: #0f172a;
-      padding: 12px;
-      border-radius: 10px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 10px;
-    }
-    .memory-preview {
-      font-size: 14px;
-      color: #cbd5e1;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-      max-width: 70%;
-    }
-    .memory-preview img {
-      max-height: 45px;
-      border-radius: 4px;
-      background: white;
-    }
-    .memory-preview audio {
-      max-width: 150px;
-      height: 30px;
-    }
-    .delete-btn {
-      background: #ef4444;
-      color: white;
-      font-size: 12px;
-      padding: 6px 12px;
-      width: auto;
-      margin: 0;
-      border-radius: 6px;
-    }
-    .delete-btn:active { background: #b91c1c; }
-    .no-memories { text-align: center; color: #64748b; font-size: 14px; padding: 20px 0; }
-  </style>
+select, textarea, button {
+  width: 100%;
+  padding: 14px;
+  margin: 8px 0 16px;
+  border-radius: 8px;
+  border: none;
+  font-size: 16px;
+  box-sizing: border-box;
+}
+
+select, textarea { background: #334155; color: white; }
+
+button {
+  background: #f59e0b;
+  color: #0f172a;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+button:active { transform: scale(0.98); }
+
+canvas {
+  background: white;
+  border-radius: 12px;
+  touch-action: none;
+  max-width: 100%;
+}
+
+.memory-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.memory-item {
+  background: #0f172a;
+  padding: 10px;
+  border-radius: 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.delete-btn {
+  background: #ef4444;
+  color: white;
+  font-size: 12px;
+  padding: 6px 10px;
+  border-radius: 6px;
+}
+</style>
 </head>
+
 <body>
 
 <div class="container">
-  <h2>Send a Memory</h2>
 
-  <label for="typeSelect">Choose Type:</label>
-  <select id="typeSelect" onchange="toggleInputs()">
-    <option value="text">Just Because (Text)</option>
-    <option value="doodle">Doodle (Draw Now)</option>
-    <option value="voice">Voice Note (Record Now)</option>
-  </select>
+<h2>Send a Memory</h2>
 
-  <div id="text-container" style="display: block;">
-    <label for="textContent">Your Message:</label>
-    <textarea id="textContent" placeholder="Type your message here..."></textarea>
-  </div>
+<p id="admin-status" style="color:#94a3b8; font-size:12px; text-align:center;"></p>
 
-  <div id="canvas-container" style="display: none;">
-    <label style="margin-bottom: 4px; display: block;">Draw with your finger:</label>
+<label>Choose Type:</label>
+<select id="typeSelect" onchange="toggleInputs()">
+  <option value="text">Text</option>
+  <option value="doodle">Doodle</option>
+  <option value="voice">Voice</option>
+</select>
 
-    <div class="brush-tools">
-      <button type="button" id="penBtn" class="tool-btn active" onclick="setBrushMode('pen')">✏️ Pen</button>
-      <button type="button" id="highlighterBtn" class="tool-btn" onclick="setBrushMode('highlighter')">🖍️ Highlighter</button>
-    </div>
-
-    <canvas id="doodleCanvas" width="350" height="380"></canvas>
-
-    <div class="color-palette-wrapper">
-      <div class="color-palette">
-        <div class="color-swatch active" style="background: #0f172a;" onclick="changeColor('#0f172a', this)"></div>
-        <div class="color-swatch" style="background: #ef4444;" onclick="changeColor('#ef4444', this)"></div>
-        <div class="color-swatch" style="background: #ec4899;" onclick="changeColor('#ec4899', this)"></div>
-        <div class="color-swatch" style="background: #f43f5e;" onclick="changeColor('#f43f5e', this)"></div>
-        <div class="color-swatch" style="background: #d946ef;" onclick="changeColor('#d946ef', this)"></div>
-        <div class="color-swatch" style="background: #a855f7;" onclick="changeColor('#a855f7', this)"></div>
-        <div class="color-swatch" style="background: #3b82f6;" onclick="changeColor('#3b82f6', this)"></div>
-        <div class="color-swatch" style="background: #0ea5e9;" onclick="changeColor('#0ea5e9', this)"></div>
-        <div class="color-swatch" style="background: #06b6d4;" onclick="changeColor('#06b6d4', this)"></div>
-        <div class="color-swatch" style="background: #14b8a6;" onclick="changeColor('#14b8a6', this)"></div>
-        <div class="color-swatch" style="background: #10b981;" onclick="changeColor('#10b981', this)"></div>
-        <div class="color-swatch" style="background: #22c55e;" onclick="changeColor('#22c55e', this)"></div>
-        <div class="color-swatch" style="background: #eab308;" onclick="changeColor('#eab308', this)"></div>
-        <div class="color-swatch" style="background: #f97316;" onclick="changeColor('#f97316', this)"></div>
-      </div>
-    </div>
-
-    <button type="button" onclick="clearCanvas()" style="background: #64748b; color: white; padding: 8px; margin-top: 15px; font-size: 14px; width: auto; border-radius: 6px;">Clear Canvas</button>
-  </div>
-
-  <div id="voice-container" style="display: none;">
-    <button type="button" id="recordBtn" class="voice-btn" onclick="toggleRecording()">🎤 Start Recording</button>
-    <audio id="audioPlayback" controls style="display: none; margin-top: 15px; width: 100%;"></audio>
-  </div>
-
-  <button id="submitBtn" onclick="postMemory()">Post Memory</button>
-
-  <p id="status-msg"></p>
+<div id="text-container">
+  <textarea id="textContent" placeholder="Type message..."></textarea>
 </div>
 
-<div class="container manager-card">
-  <h3>Manage Saved Memories</h3>
-  <div id="memoryListContainer" class="memory-list">
-    <p class="no-memories">Loading database...</p>
-  </div>
+<div id="canvas-container" style="display:none;">
+  <canvas id="doodleCanvas" width="320" height="350"></canvas>
+  <button onclick="clearCanvas()">Clear</button>
 </div>
+
+<div id="voice-container" style="display:none;">
+  <button id="recordBtn" onclick="toggleRecording()">🎤 Record</button>
+  <audio id="audioPlayback" controls style="display:none;"></audio>
+</div>
+
+<button onclick="postMemory()">Post Memory</button>
+<p id="status-msg"></p>
+
+</div>
+
+<div class="container">
+<h3>Manage Memories</h3>
+<div id="memoryListContainer" class="memory-list"></div>
+</div>
+
+<!-- Supabase -->
+<script>
+const SUPABASE_URL = "https://kucwhpkcpfadsdrqvxjv.supabase.co";
+const SUPABASE_KEY = "YOUR_KEY";
+const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+</script>
+
+<!-- shared system -->
+<script src="shared.js"></script>
 
 <script>
-  const SUPABASE_URL = "https://kucwhpkcpfadsdrqvxjv.supabase.co";
-  const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt1Y3docGtjcGZhZHNkcnF2eGp2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4NjQ2NzAsImV4cCI6MjA5NDQ0MDY3MH0.PIUz00Qm_r6NkCKL8I4XQSSmvR02qt2VPwJQVY2s2qg";
-  const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-  // Active integrated EmailJS token configurations
-  const EMAILJS_SERVICE_ID = "service_m0nwde2";
-  const EMAILJS_TEMPLATE_ID = "template_pl7h7e9";
+if (typeof getEmotionalStatus === "function") {
+  document.getElementById("admin-status").innerText = getEmotionalStatus();
+}
 
-  window.onload = () => {
+function toggleInputs() {
+  const type = document.getElementById('typeSelect').value;
+
+  document.getElementById('text-container').style.display = type === 'text' ? 'block' : 'none';
+  document.getElementById('canvas-container').style.display = type === 'doodle' ? 'block' : 'none';
+  document.getElementById('voice-container').style.display = type === 'voice' ? 'block' : 'none';
+
+  if (type === 'doodle') initCanvas();
+}
+
+/* Canvas */
+const canvas = document.getElementById("doodleCanvas");
+const ctx = canvas.getContext("2d");
+let drawing = false;
+
+function initCanvas() {
+  canvas.onmousedown = e => { drawing = true; ctx.beginPath(); draw(e); };
+  canvas.onmouseup = () => { drawing = false; };
+  canvas.onmousemove = draw;
+}
+
+function draw(e) {
+  if (!drawing) return;
+  const rect = canvas.getBoundingClientRect();
+  ctx.lineTo(e.clientX - rect.left, e.clientY - rect.top);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(e.clientX - rect.left, e.clientY - rect.top);
+}
+
+function clearCanvas() {
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+}
+
+/* voice */
+let audioBase64 = "";
+
+async function postMemory() {
+  const type = document.getElementById("typeSelect").value;
+  let content = "";
+
+  if (type === "text") content = document.getElementById("textContent").value;
+  else if (type === "doodle") content = canvas.toDataURL();
+  else if (type === "voice") content = audioBase64;
+
+  if (!content) {
+    document.getElementById("status-msg").innerText = "Empty!";
+    return;
+  }
+
+  const { error } = await _supabase.from("scrapbook").insert([{ type, content }]);
+
+  if (!error) {
+    document.getElementById("status-msg").innerText = "Saved ✔";
+
+    emailjs.send("service_m0nwde2", "template_pl7h7e9", { name: "Bebi" });
+
     loadMemoriesList();
-  };
-
-  function toggleInputs() {
-    const type = document.getElementById('typeSelect').value;
-    const txtBox = document.getElementById('text-container');
-    const cvsBox = document.getElementById('canvas-container');
-    const vceBox = document.getElementById('voice-container');
-
-    if (type === 'text') {
-      txtBox.style.display = 'block';
-      cvsBox.style.display = 'none';
-      vceBox.style.display = 'none';
-    } else if (type === 'doodle') {
-      txtBox.style.display = 'none';
-      cvsBox.style.display = 'flex';
-      vceBox.style.display = 'none';
-      initCanvas();
-    } else if (type === 'voice') {
-      txtBox.style.display = 'none';
-      cvsBox.style.display = 'none';
-      vceBox.style.display = 'flex';
-    }
   }
+}
 
-  const canvas = document.getElementById('doodleCanvas');
-  const ctx = canvas.getContext('2d');
-  let drawing = false;
-  let rawColor = "#0f172a"; 
-  let brushMode = "pen"; 
-
-  function initCanvas() {
-    updateBrushSettings();
-    canvas.onmousedown = (e) => { drawing = true; ctx.beginPath(); drawMouse(e); };
-    canvas.onmouseup = () => { drawing = false; ctx.beginPath(); };
-    canvas.onmousemove = drawMouse;
-    canvas.ontouchstart = (e) => { drawing = true; ctx.beginPath(); drawTouch(e); };
-    canvas.ontouchend = () => { drawing = false; ctx.beginPath(); };
-    canvas.ontouchmove = drawTouch;
-  }
-
-  function setBrushMode(mode) {
-    brushMode = mode;
-    document.getElementById('penBtn').classList.toggle('active', mode === 'pen');
-    document.getElementById('highlighterBtn').classList.toggle('active', mode === 'highlighter');
-    updateBrushSettings();
-  }
-
-  function changeColor(hexColor, element) {
-    rawColor = hexColor;
-    updateBrushSettings();
-    document.querySelectorAll('.color-swatch').forEach(swatch => swatch.classList.remove('active'));
-    element.classList.add('active');
-  }
-
-  function updateBrushSettings() {
-    ctx.lineCap = "round";
-    ctx.lineJoin = "round";
-    if (brushMode === "pen") {
-      ctx.strokeStyle = rawColor;
-      ctx.lineWidth = 5;
-      ctx.globalCompositeOperation = "source-over"; 
-    } else if (brushMode === "highlighter") {
-      const r = parseInt(rawColor.slice(1, 3), 16);
-      const g = parseInt(rawColor.slice(3, 5), 16);
-      const b = parseInt(rawColor.slice(5, 7), 16);
-      ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, 0.35)`;
-      ctx.lineWidth = 18; 
-      ctx.globalCompositeOperation = "source-over"; 
-    }
-  }
-
-  function drawMouse(e) {
-    if (!drawing) return;
-    const rect = canvas.getBoundingClientRect();
-    ctx.lineTo(e.clientX - rect.left, e.clientY - rect.top);
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.moveTo(e.clientX - rect.left, e.clientY - rect.top);
-  }
-
-  function drawTouch(e) {
-    if (!drawing) return;
-    e.preventDefault(); 
-    const rect = canvas.getBoundingClientRect();
-    const touch = e.touches[0];
-    ctx.lineTo(touch.clientX - rect.left, touch.clientY - rect.top);
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.moveTo(touch.clientX - rect.left, touch.clientY - rect.top);
-  }
-
-  function clearCanvas() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-  }
-
-  let mediaRecorder;
-  let audioChunks = [];
-  let audioBase64 = "";
-  let isRecording = false;
-
-  async function toggleRecording() {
-    const recordBtn = document.getElementById('recordBtn');
-    if (!isRecording) {
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({ 
-          audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: true } 
-        });
-        mediaRecorder = new MediaRecorder(stream);
-        audioChunks = [];
-        mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
-        mediaRecorder.onstop = async () => {
-          const audioBlob = new Blob(audioChunks, { type: 'audio/mp3' });
-          const reader = new FileReader();
-          reader.readAsDataURL(audioBlob);
-          reader.onloadend = () => {
-            audioBase64 = reader.result;
-            const playback = document.getElementById('audioPlayback');
-            playback.src = audioBase64;
-            playback.style.display = 'block';
-          };
-        };
-        mediaRecorder.start();
-        isRecording = true;
-        recordBtn.innerText = "🛑 Stop Recording";
-        recordBtn.classList.add('recording');
-      } catch (err) {
-        alert("Microphone permission denied.");
-      }
-    } else {
-      mediaRecorder.stop();
-      isRecording = false;
-      recordBtn.innerText = "🎤 Start Recording";
-      recordBtn.classList.remove('recording');
-    }
-  }
-
-  async function postMemory() {
-    const type = document.getElementById('typeSelect').value;
-    const statusMsg = document.getElementById('status-msg');
-    let contentData = "";
-
-    if (type === 'text') contentData = document.getElementById('textContent').value;
-    else if (type === 'doodle') contentData = canvas.toDataURL("image/png"); 
-    else if (type === 'voice') contentData = audioBase64;
-
-    if (!contentData || contentData.startsWith("data:image/png;base64,iVBOR000KGgoAAAANSUhEUgAAAUAAAAEwCAYAAADV")) {
-      statusMsg.innerText = "⚠️ Input cannot be empty!";
-      return;
-    }
-
-    statusMsg.innerText = "🚀 Sending to her scrapbook...";
-    const { data, error } = await _supabase.from('scrapbook').insert([{ type, content: contentData }]);
-
-    if (error) {
-      statusMsg.innerText = "❌ Error: " + error.message;
-    } else {
-      statusMsg.innerText = "🎉 Saved! Dispatching priority email...";
-
-      // Triggers the automated email notification handshake
-      triggerAutomatedNotification();
-
-      clearCanvas();
-      document.getElementById('textContent').value = "";
-      document.getElementById('audioPlayback').style.display = 'none';
-      audioBase64 = "";
-      loadMemoriesList(); 
-    }
-  }
-
-  /* HIGH-PRIORITY EMAIL ALERTS - CLEAN HANDSHAKE */
-  async function triggerAutomatedNotification() {
-    console.log("Initiating server email handshake...");
-
-    // Passes name context, while your dashboard safely dictates the exact target inbox
-    const templateParams = {
-      name: "Bebi"
-    };
-
-    emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, templateParams)
-      .then((response) => {
-         console.log("System alert delivered successfully!", response.status, response.text);
-      }, (err) => {
-         console.log("Email pipeline block error:", err);
-      });
-  }
-
-  async function loadMemoriesList() {
-    const container = document.getElementById('memoryListContainer');
-    const { data: memories, error } = await _supabase
-      .from('scrapbook')
-      .select('id, type, content, created_at')
-      .order('created_at', { ascending: false });
-
-    if (error) {
-      container.innerHTML = `<p class="no-memories" style="color:#ef4444;">Failed to sync rows: ${error.message}</p>`;
-      return;
-    }
-    if (!memories || memories.length === 0) {
-      container.innerHTML = `<p class="no-memories">The jar is currently empty. ✨</p>`;
-      return;
-    }
-    container.innerHTML = ""; 
-
-    memories.forEach(item => {
-      const itemRow = document.createElement('div');
-      itemRow.className = 'memory-item';
-      itemRow.id = `mem-row-${item.id}`;
-
-      let previewContent = "";
-      if (item.type === 'text') previewContent = `<span>💬 ${item.content}</span>`;
-      else if (item.type === 'doodle') previewContent = `<img src="${item.content}" />`;
-      else if (item.type === 'voice' || item.type === 'audio') previewContent = `<audio src="${item.content}" controls></audio>`;
-
-      itemRow.innerHTML = `
-        <div class="memory-preview">${previewContent}</div>
-        <button class="delete-btn" onclick="deleteMemoryRow('${item.id}')">Delete 🗑️</button>
-      `;
-      container.appendChild(itemRow);
-    });
-  }
-
-  async function deleteMemoryRow(id) {
-    if(!confirm("Are you sure you want to permanently delete this memory?")) return;
-
-    const targetId = parseInt(id, 10);
-
-    const { error } = await _supabase
-      .from('scrapbook')
-      .delete()
-      .eq('id', targetId);
-
-    if (error) {
-      alert("Could not remove row: " + error.message);
-    } else {
-      const element = document.getElementById(`mem-row-${id}`);
-      if(element) element.remove();
-
-      const container = document.getElementById('memoryListContainer');
-      if (!container || container.querySelectorAll('.memory-item').length === 0) {
-        container.innerHTML = `<p class="no-memories">The jar is currently empty. ✨</p>`;
-      }
-    }
-  }
-</script>
-</body>
-</html>
+/* load list */
+async function loadMemoriesList() {
+  const container = document.getElementById("memoryList
