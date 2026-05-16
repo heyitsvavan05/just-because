@@ -21,7 +21,7 @@
       overflow-x: hidden;
     }
 
-    /* Mood Menu Card Design */
+    /* Memory Jar Custom Card Board */
     .mood-card {
       width: 100%;
       max-width: 360px;
@@ -46,6 +46,7 @@
       margin-bottom: 25px;
     }
 
+    /* Modular Folder Layout Framework */
     .mood-options {
       display: flex;
       flex-direction: column;
@@ -74,13 +75,14 @@
       transform: scale(0.98);
     }
 
+    /* Folder Border Accent Highlights */
     .mood-btn.happy { border-left: 5px solid #eab308; }
     .mood-btn.sad { border-left: 5px solid #3b82f6; }
     .mood-btn.miss { border-left: 5px solid #ec4899; }
 
     audio { display: none; }
 
-    /* Interactive Verification Modal Overlay */
+    /* Interactive Verification Modal Layout */
     .modal-overlay {
       position: fixed;
       top: 0; left: 0; width: 100%; height: 100%;
@@ -166,7 +168,7 @@
       <h4>Link Your WhatsApp</h4>
       <p style="margin-bottom: 12px;"><strong>Step 1:</strong> Tap below to get your secure activation key from the notification bot.</p>
       
-      <button onclick="getCallMeBotKey()" style="background: #334155; color: #f59e0b; border: 1px solid #f59e0b; padding: 10px; border-radius: 8px; width: 100%; font-weight: bold; margin-bottom: 20px; cursor: pointer;">
+      <button onclick="getCallMeBotKey()" style="background: #334155; color: #f59e0b; border: 1px solid #f59e0b; padding: 10px; border-radius: 8px; width: 100%; font-weight: bold; margin-bottom: 20px; cursor: pointer; font-size: 14px;">
         📩 Request My Secret Key
       </button>
 
@@ -183,10 +185,12 @@
   </div>
 
   <script>
+    // Supabase Access Engine Connections
     const SUPABASE_URL = "https://kucwhpkcpfadsdrqvxjv.supabase.co";
     const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt1Y3docGtjcGZhZHNkcnF2eGp2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4NjQ2NzAsImV4cCI6MjA5NDQ0MDY3MH0.PIUz00Qm_r6NkCKL8I4XQSSmvR02qt2VPwJQVY2s2qg";
     const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+    // Audio Playback Navigation Pipeline Interceptor
     function handleNavigation(event, destinationUrl) {
       event.preventDefault();
       const audio = document.getElementById('bgMusic');
@@ -197,6 +201,7 @@
       });
     }
 
+    // Modal Display Controls
     function openNotificationModal() {
       document.getElementById('notificationModal').classList.add('open');
     }
@@ -205,12 +210,14 @@
       document.getElementById('notificationModal').classList.remove('open');
     }
 
+    // CallMeBot Integration Gateway
     function getCallMeBotKey() {
       const botNumber = "34644975353"; 
       const prefilledText = encodeURIComponent("I allow callmebot to send me messages");
       window.open(`https://api.whatsapp.com/send?phone=${botNumber}&text=${prefilledText}`, '_blank');
     }
 
+    // Database Sync Sync Engine
     async function saveNotificationData() {
       const rawNumber = document.getElementById('waNumberInput').value.trim();
       const apiKey = document.getElementById('waApiKeyInput').value.trim();
