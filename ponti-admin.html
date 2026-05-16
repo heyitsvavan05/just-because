@@ -639,4 +639,10 @@
     if (error) {
       alert("Could not remove row: " + error.message);
     } else {
-      const element = document.getElementById(`mem-row-${id
+      const element = document.getElementById(`mem-row-${id}`);
+      if(element) element.remove();
+    }
+  }
+</script>
+</body>
+</html>
