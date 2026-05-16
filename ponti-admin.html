@@ -1,99 +1,90 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
 <meta charset="UTF-8">
-<title>Admin</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Inbox</title>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
-body { background:#0f172a; color:white; font-family:sans-serif; display:flex; justify-content:center; }
-.box { max-width:420px; width:100%; padding:20px; }
+body{background:#0f172a;color:white;font-family:sans-serif;margin:0}
+.container{max-width:420px;margin:auto}
 
-textarea, select, button { width:100%; margin-top:10px; padding:10px; }
-
-canvas {
-  background:white;
-  width:100%;
-  height:300px;
-  touch-action:none;
+.card{
+  display:flex;
+  padding:15px;
+  border-bottom:1px solid #2d3748;
 }
 
-.delete {
-  background:red;
-  color:white;
-  border:none;
-  padding:6px;
-  margin-top:10px;
-}
+.icon{width:40px;height:40px;background:#1f2937;border-radius:50%;
+display:flex;align-items:center;justify-content:center;margin-right:10px}
+
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.7);display:flex;align-items:center;justify-content:center}
+.box{background:white;color:black;padding:15px;border-radius:10px;max-width:90%}
+.hidden{display:none}
 </style>
 </head>
 
 <body>
 
-<div class="box">
+<div class="container">
+<h2 id="title">Inbox</h2>
+<div id="list"></div>
+</div>
 
-<h2>Send Memory</h2>
-
-<select id="type" onchange="toggle()">
-  <option value="text">text</option>
-  <option value="doodle">doodle</option>
-  <option value="voice">voice</option>
-</select>
-
-<textarea id="text"></textarea>
-
-<canvas id="canvas" style="display:none;"></canvas>
-
-<button onclick="clearCanvas()">Clear</button>
-<button onclick="post()">Post</button>
-
-<p id="status"></p>
-
+<div id="modal" class="modal hidden" onclick="closeModal()">
+<div class="box" onclick="event.stopPropagation()">
+<div id="modalBody"></div>
+</div>
 </div>
 
 <script>
-const sb = supabase.createClient(
-  "https://kucwhpkcpfadsdrqvxjv.supabase.co",
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt1Y3docGtjcGZhZHNkcnF2eGp2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4NjQ2NzAsImV4cCI6MjA5NDQ0MDY3MH0.PIUz00Qm_r6NkCKL8I4XQSSmvR02qt2VPwJQVY2s2qg"
+const supabase = supabase.createClient(
+"https://kucwhpkcpfadsdrqvxjv.supabase.co",
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt1Y3docGtjcGZhZHNkcnF2eGp2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4NjQ2NzAsImV4cCI6MjA5NDQ0MDY3MH0.PIUz00Qm_r6NkCKL8I4XQSSmvR02qt2VPwJQVY2s2qg"
 );
 
-const canvas = document.getElementById("canvas");
-const ctx = canvas.getContext("2d");
+const type = new URLSearchParams(location.search).get("view");
 
-let drawing = false;
+document.getElementById("title").innerText = type.toUpperCase();
 
-canvas.onmousedown = e => { drawing = true; ctx.beginPath(); draw(e); };
-canvas.onmouseup = () => drawing = false;
-canvas.onmousemove = draw;
+async function load(){
+const {data}=await supabase.from("scrapbook").select("*").eq("type",type).order("created_at",{ascending:false});
 
-function draw(e){
-  if(!drawing) return;
-  const r = canvas.getBoundingClientRect();
-  ctx.lineTo(e.clientX - r.left, e.clientY - r.top);
-  ctx.stroke();
-  ctx.beginPath();
+const list=document.getElementById("list");
+list.innerHTML="";
+
+data.forEach(i=>{
+const div=document.createElement("div");
+div.className="card";
+
+div.innerHTML=`
+<div class="icon">💌</div>
+<div>${i.content.slice(0,40)}</div>
+`;
+
+div.onclick=()=>open(i);
+list.appendChild(div);
+});
 }
 
-function clearCanvas(){
-  ctx.clearRect(0,0,canvas.width,canvas.height);
+function open(i){
+const m=document.getElementById("modal");
+const b=document.getElementById("modalBody");
+
+if(i.type==="doodle") b.innerHTML=`<img src="${i.content}" style="max-width:100%">`;
+else if(i.type==="voice") b.innerHTML=`<audio controls src="${i.content}"></audio>`;
+else b.innerHTML=`<pre>${i.content}</pre>`;
+
+m.classList.remove("hidden");
 }
 
-function toggle(){
-  canvas.style.display = document.getElementById("type").value === "doodle" ? "block" : "none";
+function closeModal(){
+document.getElementById("modal").classList.add("hidden");
 }
 
-async function post(){
-  const type = document.getElementById("type").value;
-
-  let content = "";
-  if(type === "text") content = document.getElementById("text").value;
-  if(type === "doodle") content = canvas.toDataURL();
-
-  await sb.from("scrapbook").insert([{ type, content }]);
-
-  document.getElementById("status").innerText = "Saved ✔";
-}
+load();
 </script>
 
 </body>
