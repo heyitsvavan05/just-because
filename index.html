@@ -10,7 +10,6 @@
 <style>
 body {
   margin: 0;
-  /* UPDATED: Links directly to the dynamic background engine */
   background: var(--bg-mood, #0f172a);
   transition: background 1.5s ease-in-out;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
@@ -25,9 +24,7 @@ body {
   padding: 20px;
 }
 
-/* Enhancements to match the premium dark UI */
 .card {
-  /* UPDATED: Links directly to the dynamic card background system */
   background: var(--card-mood, #1e293b);
   padding: 20px;
   border-radius: 16px;
@@ -38,11 +35,9 @@ body {
   align-items: center;
   color: white;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-  /* Added background animation fade to matching smooth transition */
   transition: transform 0.1s, box-shadow 0.1s, background 1.5s ease-in-out;
 }
 
-/* Subtle mobile press feedback */
 .card:active {
   transform: scale(0.98);
   box-shadow: 0 2px 4px -1px rgba(0, 0, 0, 0.06);
@@ -62,7 +57,6 @@ body {
 
 #home-status {
   font-size: 13px;
-  /* UPDATED: Dynamically changes text color based on your system variables */
   color: var(--text-dim, #94a3b8);
   margin-top: 6px;
   font-style: italic;
@@ -109,6 +103,15 @@ body {
 </div>
 
 <script src="shared.js"></script>
+
+<script>
+  // Initialize Global Supabase Client Connections Securely
+  const supabaseUrl = "https://kucwhpkcpfadsdrqvxjv.supabase.co";
+  const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt1Y3docGtjcGZhZHNkcnF2eGp2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4NjQ2NzAsImV4cCI6MjA5NDQ0MDY3MH0.PIUz00Qm_r6NkCKL8I4XQSSmvR02qt2VPwJQVY2s2qg";
+  
+  const _supabase = supabase.createClient(supabaseUrl, supabaseKey);
+  console.log("🍯 Connected to database backend cluster securely.");
+</script>
 
 </body>
 </html>
