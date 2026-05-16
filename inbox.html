@@ -33,11 +33,11 @@
         const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt1Y3docGtjcGZhZHNkcnF2eGp2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4NjQ2NzAsImV4cCI6MjA5NDQ0MDY3MH0.PIUz00Qm_r6NkCKL8I4XQSSmvR02qt2VPwJQVY2s2qg";
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        // FIXED: Changed parameter key from 'type' to 'view' to match your index.html links
+        // 1. Read the parameter (?view=text, ?view=voice, or ?view=doodle)
         const urlParams = new URLSearchParams(window.location.search);
         let folderType = urlParams.get('view') || 'text'; 
 
-        // Map the title text depending on what folder parameter she opened
+        // 2. Set distinct headers so she knows exactly which room she is looking at
         const titles = { 
             'text': 'MESSAGES', 
             'voice': 'VOICE NOTES', 
@@ -45,19 +45,16 @@
         };
         document.getElementById('folder-title').innerText = titles[folderType] || 'INBOX';
 
-        // Map matching display icons to give her dynamic feedback inside the custom inbox row layout
-        const inboxIcons = {
-            'text': '💬',
-            'voice': '🎤',
-            'doodle': '🎨'
-        };
+        // 3. Match the internal card design aesthetics to the active mode
+        const inboxIcons = { 'text': '💬', 'voice': '🎤', 'doodle': '🎨' };
         const currentIcon = inboxIcons[folderType] || '❤️';
 
         async function loadNotes() {
+            // 4. FILTER QUERY: Only pull items where DB type column matches our folderType string
             const { data, error } = await _supabase
                 .from('scrapbook')
                 .select('*')
-                .eq('type', folderType) // Matches 'text', 'voice', or 'doodle' directly from the DB row strings
+                .eq('type', folderType) 
                 .order('created_at', { ascending: false });
 
             const list = document.getElementById('inbox-list');
@@ -69,17 +66,18 @@
             }
 
             if (!data || data.length === 0) {
-                list.innerHTML = '<p style="text-align:center; padding:20px; color:#94a3b8;">No memories here yet. 💛</p>';
+                list.innerHTML = `<p style="text-align:center; padding:40px 20px; color:#94a3b8; font-size:14px;">No ${titles[folderType].toLowerCase()} inside this folder yet. 💛</p>`;
                 return;
             }
 
+            // 5. Populate rows cleanly with correct context tags
             data.forEach(item => {
                 const card = document.createElement('div');
                 card.className = 'ngl-card';
                 
                 let previewText = item.content;
-                if (item.type === 'doodle') previewText = 'Sent a doodle...';
-                if (item.type === 'voice') previewText = 'Sent a voice note...';
+                if (item.type === 'doodle') previewText = '🎨 Sent a unique doodle...';
+                if (item.type === 'voice') previewText = '🎤 Sent a private voice note...';
 
                 card.innerHTML = `
                     <div class="ngl-mail-icon">${currentIcon}</div>
@@ -96,15 +94,17 @@
 
         function openModal(item) {
             const body = document.getElementById('modal-body');
+            
+            // Render rules dynamically depending on row type definition
             if (item.type === 'doodle') {
                 body.innerHTML = `<img src="${item.content}" style="width:100%; border-radius:10px; max-height: 65vh; object-fit: contain; display: block; margin: 0 auto;">`;
             } else if (item.type === 'voice') {
                 body.innerHTML = `
-                    <p style="color:#666; font-size:14px; text-align:center; margin-bottom:10px;">Voice Note</p>
+                    <p style="color:#64748b; font-size:14px; text-align:center; margin-bottom:12px;">Voice Playback</p>
                     <audio controls src="${item.content}" style="width:100%; outline:none;"></audio>
                 `;
             } else {
-                body.innerHTML = `<p style="color:#333; font-size:1.1rem; line-height:1.6; word-wrap: break-word;">${item.content}</p>`;
+                body.innerHTML = `<p style="color:#0f172a; font-size:1.1rem; line-height:1.6; text-align:left; word-wrap: break-word; white-space: pre-wrap;">${item.content}</p>`;
             }
             document.getElementById('modal').classList.remove('hidden');
         }
@@ -115,6 +115,7 @@
             if(audio) audio.pause();
         }
 
+        // Run the custom sorting function automatically on page load
         loadNotes();
     </script>
 </body>
