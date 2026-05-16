@@ -69,6 +69,19 @@ h3 {
   border-bottom: 2px solid #1e293b;
   padding-bottom: 8px;
   font-size: 18px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* APP STYLE TRACKING COUNTER */
+.count-tracker {
+  font-size: 13px;
+  background: #ef4444;
+  color: white;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-weight: bold;
 }
 
 /* CARDS */
@@ -82,8 +95,22 @@ h3 {
   cursor: pointer;
   box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
   transition: transform 0.1s;
+  position: relative;
 }
 .card:active { transform: scale(0.98); }
+
+/* Left visual flag highlighting unread states distinctly */
+.card.unread-card::before {
+  content: "";
+  position: absolute;
+  left: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 4px;
+  height: 24px;
+  background: #ef4444;
+  border-radius: 4px;
+}
 
 .icon {
   width: 44px;
@@ -171,7 +198,10 @@ h3 {
     <button class="tab-btn" id="tab-doodle" onclick="switchFolder('doodle')">🎨 Doodles</button>
   </div>
 
-  <h3 id="title">Loading Folder...</h3>
+  <h3>
+    <span id="title">Loading Folder...</span>
+    <span id="header-counter" class="count-tracker" style="display:none;">0 unread</span>
+  </h3>
   <div id="list"></div>
 </div>
 
@@ -183,40 +213,51 @@ h3 {
 </div>
 
 <script>
-// INITIALIZE DATABASE CLIENT
 const SUPABASE_URL = "https://kucwhpkcpfadsdrqvxjv.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt1Y3docGtjcGZhZHNkcnF2eGp2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4NjQ2NzAsImV4cCI6MjA5NDQ0MDY3MH0.PIUz00Qm_r6NkCKL8I4XQSSmvR02qt2VPwJQVY2s2qg";
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-// GRAB ROUTE FROM HOME PAGE CLICK
-let currentFolder = new URLSearchParams(window.location.search).get("view") || "text";
+const urlParams = new URLSearchParams(window.location.search);
+let currentFolder = urlParams.get("view") || "text";
+let localUnreadCount = parseInt(urlParams.get("unread")) || 0;
 
-// RUN SYNCHRONIZED TIMELINE ON LOAD
 window.onload = () => {
   switchFolder(currentFolder); 
 };
 
+function updateHeaderCounterDisplay() {
+  const counterBadge = document.getElementById("header-counter");
+  if (localUnreadCount > 0) {
+    counterBadge.innerText = `${localUnreadCount} unread`;
+    counterBadge.style.display = "inline-block";
+  } else {
+    counterBadge.style.display = "none";
+  }
+}
+
 function switchFolder(folderType) {
   currentFolder = folderType;
 
-  // 1. Reset all tabs instantly
+  // Clear incoming URL parameters if she tab-switches internally
+  if(urlParams.get("view") !== folderType) {
+    localUnreadCount = 0; 
+  }
+
   document.querySelectorAll('.tab-btn').forEach(btn => {
     btn.classList.remove('active');
   });
 
-  // 2. Light up the specific target tab bubble
   const activeTab = document.getElementById(`tab-${folderType}`);
   if (activeTab) {
     activeTab.classList.add('active');
   }
 
-  // 3. Update the matching section headers
   const titleEl = document.getElementById("title");
   if (folderType === "text") titleEl.innerText = "Messages";
   if (folderType === "voice") titleEl.innerText = "Voice Notes";
   if (folderType === "doodle") titleEl.innerText = "Doodles";
 
-  // 4. Fire clean database query execution
+  updateHeaderCounterDisplay();
   loadMemories();
 }
 
@@ -233,12 +274,23 @@ async function loadMemories() {
 
   if(error || !data || data.length === 0) {
     list.innerHTML = `<p class="no-items">This folder is empty right now. ✨</p>`;
+    localUnreadCount = 0;
+    updateHeaderCounterDisplay();
     return;
   }
+
+  // Recount accurate unread rows directly from live payload data
+  localUnreadCount = data.filter(item => item.is_read === false || item.is_read === null).length;
+  updateHeaderCounterDisplay();
 
   data.forEach(item => {
     const div = document.createElement("div");
     div.className = "card";
+    
+    // Add visual flag class if item is unread
+    if (item.is_read === false || item.is_read === null) {
+      div.classList.add("unread-card");
+    }
 
     let folderIcon = "💌";
     let previewElement = "";
@@ -259,13 +311,13 @@ async function loadMemories() {
       <div class="preview-box">${previewElement}</div>
     `;
 
-    div.onclick = () => openMemory(item);
+    // Pass down instance reference node to manipulate styling elements fluidly
+    div.onclick = () => openMemory(item, div);
     list.appendChild(div);
   });
 }
 
-// UPDATED: Now marks items as read on click
-async function openMemory(item) {
+async function openMemory(item, cardElement) {
   const body = document.getElementById("modal-body");
 
   if (item.type === "doodle") {
@@ -278,8 +330,21 @@ async function openMemory(item) {
 
   document.getElementById("modal").style.display = "flex";
 
-  // FIX: If the item is unread, update it in Supabase right now!
+  // If item is unread, immediately fire the decrement engines
   if (item.is_read === false || item.is_read === null) {
+    // 1. Remove left red strip line indicator instantly
+    cardElement.classList.remove("unread-card");
+    
+    // 2. Decrement the local layout value and update header text string
+    if (localUnreadCount > 0) {
+      localUnreadCount--;
+      updateHeaderCounterDisplay();
+    }
+    
+    // 3. Mark read status internally to prevent repeat clicks from messing up the numbers
+    item.is_read = true;
+
+    // 4. Update row values in the database table synchronously
     await sb
       .from("scrapbook")
       .update({ is_read: true })
