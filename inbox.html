@@ -1,164 +1,239 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Inbox</title>
-    <link rel="stylesheet" href="style.css">
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    
-    <style>
-        /* FIXES SQUISHED SIDES AND MESSAGES CRAMMED AT THE TOP */
-        body.ngl-body {
-            margin: 0;
-            padding: 0;
-            background-color: #0f172a; /* Fallback matching your theme */
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Inbox</title>
 
-        /* Forces container to take full width with clean mobile breathing room on side edges */
-        .ngl-container {
-            width: 100% !important;
-            max-width: 420px !important; /* Perfect phone width constraint */
-            margin: 0 auto !important;
-            padding: 10px 20px !important; /* 20px stops the squished edge-clipping completely */
-            box-sizing: border-box !important;
-        }
+<link rel="stylesheet" href="style.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-        /* Spaces cards vertically and pushes them safely down away from the top header bar */
-        #inbox-list {
-            display: flex !important;
-            flex-direction: column !important;
-            gap: 15px !important; /* Adds visual breathing room between cards */
-            margin-top: 30px !important; /* Pushes cards cleanly down from the top header */
-            padding-bottom: 40px !important;
-            width: 100% !important;
-            box-sizing: border-box !important;
-        }
+<style>
+body {
+    margin: 0;
+    padding: 0;
+    background: #0f172a;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
 
-        /* Ensures cards utilize the newly restored side space gracefully */
-        .ngl-card {
-            width: 100% !important;
-            box-sizing: border-box !important;
-            background: #1e293b !important;
-            border-radius: 14px !important;
-            padding: 16px !important;
-            display: flex !important;
-            align-items: center !important;
-            justify-content: space-between !important;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2) !important;
-        }
-    </style>
+/* container */
+.ngl-container {
+    width: 100%;
+    max-width: 420px;
+    margin: 0 auto;
+}
+
+/* header */
+.ngl-header {
+    position: sticky;
+    top: 0;
+    background: #0f172a;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 1.2rem;
+    border-bottom: 1px solid #2d3748;
+}
+
+.ngl-tabs span {
+    font-weight: 800;
+    color: white;
+    border-bottom: 2px solid white;
+}
+
+#inbox-status {
+    font-size: 12px;
+    color: #94a3b8;
+    margin-top: 4px;
+}
+
+/* cards */
+.ngl-card {
+    display: flex;
+    align-items: center;
+    padding: 1rem;
+    border-bottom: 1px solid #2d3748;
+    color: white;
+    cursor: pointer;
+}
+
+.ngl-card:active {
+    background: #1a202c;
+}
+
+.ngl-mail-icon {
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    background: #1f2937;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 12px;
+}
+
+.ngl-text-content {
+    flex: 1;
+}
+
+.ngl-text-content p {
+    margin: 0;
+    font-size: 14px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.ngl-text-content span {
+    font-size: 11px;
+    color: #94a3b8;
+}
+
+/* modal */
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.modal-content {
+    background: white;
+    color: black;
+    padding: 20px;
+    border-radius: 16px;
+    max-width: 90%;
+}
+
+.hidden {
+    display: none;
+}
+</style>
 </head>
-<body class="ngl-body">
 
-    <div class="ngl-container">
-        <header class="ngl-header">
-            <div onclick="location.href='index.html'" class="back-btn">◀</div>
-            <div class="ngl-tabs"><span id="folder-title">INBOX</span></div>
-            <div class="icon">⚙️</div>
-        </header>
+<body>
 
-        <main id="inbox-list">
-            <div class="loading-state">Loading your memories...</div>
-        </main>
+<div class="ngl-container">
+
+<header class="ngl-header">
+    <div onclick="location.href='index.html'" style="cursor:pointer;">◀</div>
+
+    <div>
+        <span id="folder-title">INBOX</span>
+        <p id="inbox-status"></p>
     </div>
 
-    <div id="modal" class="modal hidden" onclick="closeModal()">
-        <div class="modal-content" onclick="event.stopPropagation()">
-            <div id="modal-body"></div>
-            <button class="close-btn" onclick="closeModal()">Close</button>
-        </div>
+    <div>⚙️</div>
+</header>
+
+<main id="inbox-list"></main>
+
+</div>
+
+<!-- modal -->
+<div id="modal" class="modal hidden" onclick="closeModal()">
+    <div class="modal-content" onclick="event.stopPropagation()">
+        <div id="modal-body"></div>
+        <button onclick="closeModal()">Close</button>
     </div>
+</div>
 
-    <script>
-        const SUPABASE_URL = "https://kucwhpkcpfadsdrqvxjv.supabase.co";
-        const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt1Y3docGtjcGZhZHNkcnF2eGp2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4NjQ2NzAsImV4cCI6MjA5NDQ0MDY3MH0.PIUz00Qm_r6NkCKL8I4XQSSmvR02qt2VPwJQVY2s2qg";
-        const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+<!-- Supabase -->
+<script>
+const SUPABASE_URL = "https://kucwhpkcpfadsdrqvxjv.supabase.co";
+const SUPABASE_KEY = "YOUR_KEY";
+const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+</script>
 
-        // 1. Read the parameter (?view=text, ?view=voice, or ?view=doodle)
-        const urlParams = new URLSearchParams(window.location.search);
-        let folderType = urlParams.get('view') || 'text'; 
+<!-- shared system -->
+<script src="shared.js"></script>
 
-        // 2. Set distinct headers so she knows exactly which room she is looking at
-        const titles = { 
-            'text': 'MESSAGES', 
-            'voice': 'VOICE NOTES', 
-            'doodle': 'DOODLES' 
-        };
-        document.getElementById('folder-title').innerText = titles[folderType] || 'INBOX';
+<!-- page logic -->
+<script>
 
-        // 3. Match the internal card design aesthetics to the active mode
-        const inboxIcons = { 'text': '💬', 'voice': '🎤', 'doodle': '🎨' };
-        const currentIcon = inboxIcons[folderType] || '❤️';
+const urlParams = new URLSearchParams(window.location.search);
+let folderType = urlParams.get('view') || 'text';
 
-        async function loadNotes() {
-            // 4. FILTER QUERY: Only pull items where DB type column matches our folderType string
-            const { data, error } = await _supabase
-                .from('scrapbook')
-                .select('*')
-                .eq('type', folderType) 
-                .order('created_at', { ascending: false });
+const titles = {
+    text: "MESSAGES",
+    voice: "VOICE NOTES",
+    doodle: "DOODLES"
+};
 
-            const list = document.getElementById('inbox-list');
-            list.innerHTML = ''; 
+document.getElementById("folder-title").innerText = titles[folderType] || "INBOX";
 
-            if (error) {
-                list.innerHTML = '<p style="text-align:center; padding:20px;">Error loading memories.</p>';
-                return;
-            }
+// status (from shared.js)
+if (typeof getInboxStatus === "function") {
+    document.getElementById("inbox-status").innerText = getInboxStatus();
 
-            if (!data || data.length === 0) {
-                list.innerHTML = `<p style="text-align:center; padding:40px 20px; color:#94a3b8; font-size:14px;">No ${titles[folderType].toLowerCase()} inside this folder yet. 💛</p>`;
-                return;
-            }
+    setInterval(() => {
+        document.getElementById("inbox-status").innerText = getInboxStatus();
+    }, 60000);
+}
 
-            // 5. Populate rows cleanly with correct context tags
-            data.forEach(item => {
-                const card = document.createElement('div');
-                card.className = 'ngl-card';
+// load notes
+async function loadNotes() {
+    const { data, error } = await _supabase
+        .from('scrapbook')
+        .select('*')
+        .eq('type', folderType)
+        .order('created_at', { ascending: false });
 
-                let previewText = item.content;
-                if (item.type === 'doodle') previewText = '🎨 Sent a unique doodle...';
-                if (item.type === 'voice') previewText = '🎤 Sent a private voice note...';
+    const list = document.getElementById('inbox-list');
+    list.innerHTML = "";
 
-                card.innerHTML = `
-                    <div class="ngl-mail-icon">${currentIcon}</div>
-                    <div class="ngl-text-content">
-                        <p>${previewText.substring(0, 35)}${previewText.length > 35 ? '...' : ''}</p>
-                        <span>${new Date(item.created_at).toLocaleDateString()}</span>
-                    </div>
-                    <div class="ngl-arrow">❯</div>
-                `;
-                card.onclick = () => openModal(item);
-                list.appendChild(card);
-            });
-        }
+    if (!data || data.length === 0) {
+        list.innerHTML = "<p style='color:#94a3b8; text-align:center; padding:30px;'>Nothing here yet...</p>";
+        return;
+    }
 
-        function openModal(item) {
-            const body = document.getElementById('modal-body');
+    data.forEach(item => {
+        const card = document.createElement('div');
+        card.className = "ngl-card";
 
-            // Render rules dynamically depending on row type definition
-            if (item.type === 'doodle') {
-                body.innerHTML = `<img src="${item.content}" style="width:100%; border-radius:10px; max-height: 65vh; object-fit: contain; display: block; margin: 0 auto;">`;
-            } else if (item.type === 'voice') {
-                body.innerHTML = `
-                    <p style="color:#64748b; font-size:14px; text-align:center; margin-bottom:12px;">Voice Playback</p>
-                    <audio controls src="${item.content}" style="width:100%; outline:none;"></audio>
-                `;
-            } else {
-                body.innerHTML = `<p style="color:#0f172a; font-size:1.1rem; line-height:1.6; text-align:left; word-wrap: break-word; white-space: pre-wrap;">${item.content}</p>`;
-            }
-            document.getElementById('modal').classList.remove('hidden');
-        }
+        let preview = item.content;
+        if (item.type === "doodle") preview = "🎨 Doodle";
+        if (item.type === "voice") preview = "🎤 Voice Note";
 
-        function closeModal() {
-            document.getElementById('modal').classList.add('hidden');
-            const audio = document.querySelector('#modal-body audio');
-            if(audio) audio.pause();
-        }
+        card.innerHTML = `
+            <div class="ngl-mail-icon">💌</div>
+            <div class="ngl-text-content">
+                <p>${preview.substring(0,40)}</p>
+                <span>${new Date(item.created_at).toLocaleDateString()}</span>
+            </div>
+        `;
 
-        // Run the custom sorting function automatically on page load
-        loadNotes();
-    </script>
+        card.onclick = () => openModal(item);
+        list.appendChild(card);
+    });
+}
+
+function openModal(item) {
+    const body = document.getElementById("modal-body");
+
+    if (item.type === "doodle") {
+        body.innerHTML = `<img src="${item.content}" style="max-width:100%;">`;
+    } else if (item.type === "voice") {
+        body.innerHTML = `<audio controls src="${item.content}" style="width:100%"></audio>`;
+    } else {
+        body.innerHTML = `<p style="white-space:pre-wrap;">${item.content}</p>`;
+    }
+
+    document.getElementById("modal").classList.remove("hidden");
+}
+
+function closeModal() {
+    document.getElementById("modal").classList.add("hidden");
+}
+
+loadNotes();
+
+</script>
+
 </body>
 </html>
