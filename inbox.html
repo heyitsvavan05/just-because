@@ -5,120 +5,77 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Inbox</title>
 
-<link rel="stylesheet" href="style.css">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
 body {
-    margin: 0;
-    padding: 0;
-    background: #0f172a;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  margin: 0;
+  background: #0f172a;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  color: white;
 }
 
-/* container */
 .ngl-container {
-    width: 100%;
-    max-width: 420px;
-    margin: 0 auto;
+  max-width: 420px;
+  margin: auto;
 }
 
-/* header */
 .ngl-header {
-    position: sticky;
-    top: 0;
-    background: #0f172a;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 1rem 1.2rem;
-    border-bottom: 1px solid #2d3748;
-    color: white;
+  position: sticky;
+  top: 0;
+  background: #0f172a;
+  display: flex;
+  justify-content: space-between;
+  padding: 1rem;
+  border-bottom: 1px solid #2d3748;
 }
 
-.ngl-tabs span {
-    font-weight: 800;
-    color: white;
-    border-bottom: 2px solid white;
-}
-
-#inbox-status {
-    font-size: 12px;
-    color: #94a3b8;
-    margin-top: 4px;
-}
-
-/* cards */
 .ngl-card {
-    display: flex;
-    align-items: center;
-    padding: 1rem;
-    border-bottom: 1px solid #2d3748;
-    color: white;
-    cursor: pointer;
-}
-
-.ngl-card:active {
-    background: #1a202c;
+  display: flex;
+  padding: 1rem;
+  border-bottom: 1px solid #2d3748;
+  cursor: pointer;
 }
 
 .ngl-mail-icon {
-    width: 45px;
-    height: 45px;
-    border-radius: 50%;
-    background: #1f2937;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-right: 12px;
-    flex-shrink: 0;
-}
-
-.ngl-text-content {
-    flex: 1;
-    overflow: hidden;
+  width: 45px;
+  height: 45px;
+  border-radius: 50%;
+  background: #1f2937;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-right: 12px;
 }
 
 .ngl-text-content p {
-    margin: 0;
-    font-size: 14px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+  margin: 0;
+  font-size: 14px;
 }
 
 .ngl-text-content span {
-    font-size: 11px;
-    color: #94a3b8;
+  font-size: 11px;
+  color: #94a3b8;
 }
 
-/* modal */
 .modal {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0,0,0,0.7);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    padding: 20px;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .modal-content {
-    background: white;
-    color: black;
-    padding: 20px;
-    border-radius: 16px;
-    max-width: 90%;
-    max-height: 80vh;
-    overflow-y: auto;
+  background: white;
+  color: black;
+  padding: 20px;
+  border-radius: 12px;
+  max-width: 90%;
 }
 
-.hidden {
-    display: none;
-}
+.hidden { display: none; }
 </style>
 </head>
 
@@ -126,131 +83,87 @@ body {
 
 <div class="ngl-container">
 
-<header class="ngl-header">
-    <div onclick="location.href='index.html'" style="cursor:pointer;">◀</div>
-
-    <div>
-        <span id="folder-title">INBOX</span>
-        <p id="inbox-status"></p>
-    </div>
-
-    <div>⚙️</div>
-</header>
+<div class="ngl-header">
+  <div onclick="location.href='index.html'">◀</div>
+  <div>
+    <div id="folder-title">INBOX</div>
+    <div id="inbox-status" style="font-size:12px;color:#94a3b8;"></div>
+  </div>
+</div>
 
 <main id="inbox-list"></main>
 
 </div>
 
-<!-- modal -->
 <div id="modal" class="modal hidden" onclick="closeModal()">
-    <div class="modal-content" onclick="event.stopPropagation()">
-        <div id="modal-body"></div>
-        <button onclick="closeModal()">Close</button>
-    </div>
+  <div class="modal-content" onclick="event.stopPropagation()">
+    <div id="modal-body"></div>
+    <button onclick="closeModal()">Close</button>
+  </div>
 </div>
 
-<!-- Supabase (FIXED - MUST MATCH ALL FILES) -->
 <script>
 const SUPABASE_URL = "https://kucwhpkcpfadsdrqvxjv.supabase.co";
-
-const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt1Y3docGtjcGZhZHNkcnF2eGp2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4NjQ2NzAsImV4cCI6MjA5NDQ0MDY3MH0.PIUz00Qm_r6NkCKL8I4XQSSmvR02qt2VPwJQVY2s2qg";
-
+const SUPABASE_KEY = "YOUR_SUPABASE_ANON_KEY";
 const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-</script>
 
-<!-- shared system -->
-<script src="shared.js"></script>
+const urlParams = new URLSearchParams(location.search);
+const folderType = urlParams.get("view") || "text";
 
-<!-- page logic -->
-<script>
-
-const urlParams = new URLSearchParams(window.location.search);
-let folderType = urlParams.get('view') || 'text';
-
-const titles = {
-    text: "MESSAGES",
-    voice: "VOICE NOTES",
-    doodle: "DOODLES"
-};
-
-document.getElementById("folder-title").innerText = titles[folderType] || "INBOX";
-
-// optional status
-if (typeof getInboxStatus === "function") {
-    document.getElementById("inbox-status").innerText = getInboxStatus();
-
-    setInterval(() => {
-        document.getElementById("inbox-status").innerText = getInboxStatus();
-    }, 60000);
-}
+document.getElementById("folder-title").innerText =
+  folderType.toUpperCase();
 
 async function loadNotes() {
+  const { data } = await _supabase
+    .from("scrapbook")
+    .select("*")
+    .eq("type", folderType)
+    .order("created_at", { ascending: false });
 
-    const { data, error } = await _supabase
-        .from('scrapbook')
-        .select('*')
-        .eq('type', folderType)
-        .order('created_at', { ascending: false });
+  const list = document.getElementById("inbox-list");
+  list.innerHTML = "";
 
-    const list = document.getElementById('inbox-list');
-    list.innerHTML = "";
+  if (!data?.length) {
+    list.innerHTML = "<p style='text-align:center;color:#94a3b8'>Empty</p>";
+    return;
+  }
 
-    if (error) {
-        list.innerHTML = "<p style='color:red;text-align:center;'>Error loading data</p>";
-        return;
-    }
+  data.forEach(item => {
+    const div = document.createElement("div");
+    div.className = "ngl-card";
 
-    if (!data || data.length === 0) {
-        list.innerHTML = "<p style='color:#94a3b8; text-align:center; padding:30px;'>Nothing here yet...</p>";
-        return;
-    }
+    div.innerHTML = `
+      <div class="ngl-mail-icon">💌</div>
+      <div class="ngl-text-content">
+        <p>${(item.content || "").slice(0, 40)}</p>
+        <span>${new Date(item.created_at).toLocaleDateString()}</span>
+      </div>
+    `;
 
-    data.forEach(item => {
-
-        const card = document.createElement('div');
-        card.className = "ngl-card";
-
-        let preview = "";
-
-        if (item.type === "doodle") preview = "🎨 Doodle";
-        else if (item.type === "voice") preview = "🎤 Voice Note";
-        else preview = item.content || "";
-
-        card.innerHTML = `
-            <div class="ngl-mail-icon">💌</div>
-            <div class="ngl-text-content">
-                <p>${preview.substring(0, 40)}</p>
-                <span>${new Date(item.created_at).toLocaleDateString()}</span>
-            </div>
-        `;
-
-        card.onclick = () => openModal(item);
-        list.appendChild(card);
-    });
+    div.onclick = () => openModal(item);
+    list.appendChild(div);
+  });
 }
 
 function openModal(item) {
-    const body = document.getElementById("modal-body");
+  const body = document.getElementById("modal-body");
 
-    if (item.type === "doodle") {
-        body.innerHTML = `<img src="${item.content}" style="max-width:100%; border-radius:10px;">`;
+  if (item.type === "doodle") {
+    body.innerHTML = `<img src="${item.content}" style="max-width:100%">`;
+  } else if (item.type === "voice") {
+    body.innerHTML = `<audio controls src="${item.content}" style="width:100%"></audio>`;
+  } else {
+    body.innerHTML = `<p style="white-space:pre-wrap">${item.content}</p>`;
+  }
 
-    } else if (item.type === "voice") {
-        body.innerHTML = `<audio controls src="${item.content}" style="width:100%"></audio>`;
-
-    } else {
-        body.innerHTML = `<p style="white-space:pre-wrap;">${item.content || ""}</p>`;
-    }
-
-    document.getElementById("modal").classList.remove("hidden");
+  document.getElementById("modal").classList.remove("hidden");
 }
 
 function closeModal() {
-    document.getElementById("modal").classList.add("hidden");
+  document.getElementById("modal").classList.add("hidden");
 }
 
 loadNotes();
-
 </script>
 
 </body>
