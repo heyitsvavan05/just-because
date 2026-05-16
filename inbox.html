@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Inbox</title>
+<title>Inbox - Bebi's Memory Jar</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 body {
@@ -17,13 +17,43 @@ body {
   max-width: 420px;
   margin: auto;
 }
-h3 {
+
+/* FOLDER TABS */
+.tab-container {
+  display: flex;
+  justify-content: space-between;
+  background: #1e293b;
+  padding: 6px;
+  border-radius: 12px;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 6px -1px rgba(0,0,0,0.2);
+}
+.tab-btn {
+  flex: 1;
+  background: transparent;
+  color: #94a3b8;
+  border: none;
+  padding: 10px 0;
+  font-size: 13px; /* Slightly smaller to fit "Voice Notes" */
+  font-weight: bold;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.tab-btn.active {
+  background: #0f172a;
   color: #f59e0b;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);
+}
+
+h3 {
+  color: #f8fafc;
   margin-top: 0;
   border-bottom: 2px solid #1e293b;
   padding-bottom: 8px;
-  text-transform: capitalize;
+  font-size: 18px;
 }
+
 .card {
   display: flex;
   align-items: center;
@@ -33,7 +63,10 @@ h3 {
   margin-bottom: 12px;
   cursor: pointer;
   box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+  transition: transform 0.1s;
 }
+.card:active { transform: scale(0.98); }
+
 .icon {
   width: 44px;
   height: 44px;
@@ -63,6 +96,8 @@ h3 {
   max-width: 180px;
   height: 28px;
 }
+
+/* Modal styling */
 .modal {
   position: fixed;
   inset: 0;
@@ -72,6 +107,7 @@ h3 {
   align-items: center;
   padding: 20px;
   z-index: 100;
+  backdrop-filter: blur(4px);
 }
 .modal-content {
   background: #1e293b;
@@ -100,14 +136,21 @@ h3 {
   cursor: pointer;
   width: 100%;
 }
-.no-items { text-align: center; color: #64748b; margin-top: 40px; }
+.no-items { text-align: center; color: #64748b; margin-top: 40px; font-size: 15px; }
 </style>
 </head>
 <body>
 
 <div class="container">
-  <h3 id="title">Memories Folder</h3>
-  <div id="list">Loading jar content...</div>
+  
+  <div class="tab-container">
+    <button class="tab-btn active" id="tab-text" onclick="switchFolder('text')">💬 Messages</button>
+    <button class="tab-btn" id="tab-voice" onclick="switchFolder('voice')">🎤 Voice Notes</button>
+    <button class="tab-btn" id="tab-doodle" onclick="switchFolder('doodle')">🎨 Doodles</button>
+  </div>
+
+  <h3 id="title">Loading...</h3>
+  <div id="list"></div>
 </div>
 
 <div class="modal" id="modal" onclick="closeModal()">
@@ -122,20 +165,43 @@ const SUPABASE_URL = "https://kucwhpkcpfadsdrqvxjv.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt1Y3docGtjcGZhZHNkcnF2eGp2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4NjQ2NzAsImV4cCI6MjA5NDQ0MDY3MH0.PIUz00Qm_r6NkCKL8I4XQSSmvR02qt2VPwJQVY2s2qg";
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const type = new URLSearchParams(location.search).get("view") || "text";
-document.getElementById("title").innerText = type === "text" ? "💬 Just Because Messages" : type === "doodle" ? "🎨 Hand-drawn Doodles" : "🎤 Voice Notes";
+// Grabs the exact folder she clicked from index.html (or defaults to Messages)
+let currentFolder = new URLSearchParams(window.location.search).get("view") || "text";
 
-async function load() {
+window.onload = () => {
+  switchFolder(currentFolder); 
+};
+
+function switchFolder(folderType) {
+  currentFolder = folderType;
+
+  // Highlight the correct folder tab
+  document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+  document.getElementById(`tab-${folderType}`).classList.add('active');
+
+  // Update Header Title to match exactly
+  const titleEl = document.getElementById("title");
+  if (folderType === "text") titleEl.innerText = "Messages";
+  if (folderType === "voice") titleEl.innerText = "Voice Notes";
+  if (folderType === "doodle") titleEl.innerText = "Doodles";
+
+  // Pull correct items
+  loadMemories();
+}
+
+async function loadMemories() {
+  const list = document.getElementById("list");
+  list.innerHTML = `<p class="no-items" style="color: #f59e0b;">Fetching memories...</p>`;
+
   const { data, error } = await sb.from("scrapbook")
     .select("*")
-    .eq("type", type)
+    .eq("type", currentFolder)
     .order("created_at", { ascending: false });
 
-  const list = document.getElementById("list");
   list.innerHTML = "";
 
   if(error || !data || data.length === 0) {
-    list.innerHTML = `<p class="no-items">This part of the jar is empty right now. ✨</p>`;
+    list.innerHTML = `<p class="no-items">This folder is empty right now. ✨</p>`;
     return;
   }
 
@@ -149,12 +215,12 @@ async function load() {
     if (item.type === "text") {
       folderIcon = "💬";
       previewElement = `<span>${item.content.slice(0, 40)}${item.content.length > 40 ? '...' : ''}</span>`;
+    } else if (item.type === "voice") {
+      folderIcon = "🎤";
+      previewElement = `<audio src="${item.content}" controls preload="metadata"></audio>`;
     } else if (item.type === "doodle") {
       folderIcon = "🎨";
       previewElement = `<img src="${item.content}" alt="Doodle Preview"/>`;
-    } else if (item.type === "voice") {
-      folderIcon = "🎤";
-      previewElement = `<audio src="${item.content}" controls></audio>`;
     }
 
     div.innerHTML = `
@@ -173,7 +239,7 @@ function openMemory(item) {
   if (item.type === "doodle") {
     body.innerHTML = `<img src="${item.content}" style="max-width:100%; border-radius:8px; background:white;">`;
   } else if (item.type === "voice") {
-    body.innerHTML = `<p style="margin-bottom:10px; font-size:14px; color:#94a3b8;">Voice Note Payload Recieved:</p><audio controls src="${item.content}" style="width:100%"></audio>`;
+    body.innerHTML = `<p style="margin-bottom:10px; font-size:14px; color:#94a3b8;">Voice Note:</p><audio controls src="${item.content}" style="width:100%" autoplay></audio>`;
   } else {
     body.innerText = item.content;
   }
@@ -183,9 +249,12 @@ function openMemory(item) {
 
 function closeModal() {
   document.getElementById("modal").style.display = "none";
+  const audioEl = document.querySelector('#modal-body audio');
+  if(audioEl) {
+      audioEl.pause();
+      audioEl.currentTime = 0;
+  }
 }
-
-load();
 </script>
 </body>
 </html>
