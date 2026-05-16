@@ -76,7 +76,7 @@ h3 {
 
 /* APP STYLE TRACKING COUNTER */
 .count-tracker {
-  font-size: 13px;
+  font-size: 12px;
   background: #ef4444;
   color: white;
   padding: 3px 10px;
@@ -199,7 +199,10 @@ h3 {
   </div>
 
   <h3>
-    <span id="title">Loading Folder...</span>
+    <div>
+      <span id="title">Loading Folder...</span>
+      <span id="total-badge" style="font-size: 13px; color: #94a3b8; font-weight: normal; margin-left: 6px;"></span>
+    </div>
     <span id="header-counter" class="count-tracker" style="display:none;">0 unread</span>
   </h3>
   <div id="list"></div>
@@ -257,6 +260,9 @@ function switchFolder(folderType) {
   if (folderType === "voice") titleEl.innerText = "Voice Notes";
   if (folderType === "doodle") titleEl.innerText = "Doodles";
 
+  // Reset total counter text cleanly while switching folders
+  document.getElementById("total-badge").innerText = "...";
+
   updateHeaderCounterDisplay();
   loadMemories();
 }
@@ -275,9 +281,13 @@ async function loadMemories() {
   if(error || !data || data.length === 0) {
     list.innerHTML = `<p class="no-items">This folder is empty right now. ✨</p>`;
     localUnreadCount = 0;
+    document.getElementById("total-badge").innerText = "(0 Total)";
     updateHeaderCounterDisplay();
     return;
   }
+
+  // Inject total calculation metrics safely inside the header layout span
+  document.getElementById("total-badge").innerText = `(${data.length} Total)`;
 
   // Recount accurate unread rows directly from live payload data
   localUnreadCount = data.filter(item => item.is_read === false || item.is_read === null).length;
