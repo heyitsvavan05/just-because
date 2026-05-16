@@ -42,7 +42,7 @@
     textarea { height: 120px; resize: none; margin-bottom: 20px; }
     button { background: #f59e0b; color: #0f172a; font-weight: bold; cursor: pointer; margin-bottom: 0; }
     button:active { transform: scale(0.98); }
-    
+
     #canvas-container, #voice-container {
       display: flex;
       flex-direction: column;
@@ -52,7 +52,7 @@
       border-radius: 12px;
       margin: 8px 0 20px 0;
     }
-    
+
     canvas {
       background: white;
       border-radius: 12px;
@@ -113,7 +113,7 @@
       transform: scale(1.2);
       box-shadow: 0 0 10px rgba(245, 158, 11, 0.6);
     }
-    
+
     .voice-btn { background: #ef4444; color: white; font-weight: bold; margin-bottom: 0; }
     .recording { animation: pulse 1.5s infinite; background: #b91c1c; }
     @keyframes pulse {
@@ -183,7 +183,7 @@
 
 <div class="container">
   <h2>Send a Memory</h2>
-  
+
   <label for="typeSelect">Choose Type:</label>
   <select id="typeSelect" onchange="toggleInputs()">
     <option value="text">Just Because (Text)</option>
@@ -198,14 +198,14 @@
 
   <div id="canvas-container" style="display: none;">
     <label style="margin-bottom: 4px; display: block;">Draw with your finger:</label>
-    
+
     <div class="brush-tools">
       <button type="button" id="penBtn" class="tool-btn active" onclick="setBrushMode('pen')">✏️ Pen</button>
       <button type="button" id="highlighterBtn" class="tool-btn" onclick="setBrushMode('highlighter')">🖍️ Highlighter</button>
     </div>
 
     <canvas id="doodleCanvas" width="350" height="380"></canvas>
-    
+
     <div class="color-palette-wrapper">
       <div class="color-palette">
         <div class="color-swatch active" style="background: #0f172a;" onclick="changeColor('#0f172a', this)"></div>
@@ -234,7 +234,7 @@
   </div>
 
   <button id="submitBtn" onclick="postMemory()">Post Memory</button>
-  
+
   <p id="status-msg"></p>
 </div>
 
@@ -331,7 +331,7 @@
     ctx.beginPath();
     ctx.moveTo(e.clientX - rect.left, e.clientY - rect.top);
   }
-  
+
   function drawTouch(e) {
     if (!drawing) return;
     e.preventDefault(); 
@@ -409,9 +409,9 @@
       statusMsg.innerText = "❌ Error: " + error.message;
     } else {
       statusMsg.innerText = "🎉 Saved! Notifying her...";
-      
+
       triggerAutomatedNotification();
-      
+
       clearCanvas();
       document.getElementById('textContent').value = "";
       document.getElementById('audioPlayback').style.display = 'none';
@@ -422,7 +422,7 @@
 
   async function triggerAutomatedNotification() {
     const { data, error } = await _supabase.from('config_settings').select('key_name, value');
-    
+
     if (error || !data) {
       console.log("Could not pull routing tokens:", error);
       return;
@@ -441,9 +441,9 @@
 
     const message = "Hey Bebi! I just dropped something into your jar. Go check it! 🌌";
     const encodedMessage = encodeURIComponent(message);
-    
+
     const apiEndpoint = `https://api.callmebot.com/whatsapp.php?phone=${targetNumber}&text=${encodedMessage}&apikey=${activeApiKey}`;
-    
+
     fetch(apiEndpoint, { mode: 'no-cors' })
       .then(() => console.log("Background webhook pushed."))
       .catch(err => console.log("Pipeline logging issue:", err));
@@ -478,21 +478,34 @@
 
       itemRow.innerHTML = `
         <div class="memory-preview">${previewContent}</div>
-        <button class="delete-btn" onclick="deleteMemoryRow(${item.id})">Delete 🗑️</button>
+        <button class="delete-btn" onclick="deleteMemoryRow('${item.id}')">Delete 🗑️</button>
       `;
       container.appendChild(itemRow);
     });
   }
 
+  /* FIXED FOR RELIABLE DATABASE REMOVAL */
   async function deleteMemoryRow(id) {
     if(!confirm("Are you sure you want to permanently delete this memory?")) return;
-    const { error } = await _supabase.from('scrapbook').delete().eq('id', id);
-    if (error) alert("Could not remove row: " + error.message);
-    else {
+    
+    // Explicitly enforce number parsing formatting for database row indexing 
+    const targetId = parseInt(id, 10);
+    
+    const { error } = await _supabase
+      .from('scrapbook')
+      .delete()
+      .eq('id', targetId);
+
+    if (error) {
+      alert("Could not remove row: " + error.message + "\n\n⚠️ NOTE: If this error says policy template missing, you need to add a DELETE rule in your Supabase dashboard policies section for table 'scrapbook'.");
+    } else {
       const element = document.getElementById(`mem-row-${id}`);
       if(element) element.remove();
+      
       const container = document.getElementById('memoryListContainer');
-      if (container.children.length === 0) container.innerHTML = `<p class="no-memories">The jar is currently empty. ✨</p>`;
+      if (!container || container.querySelectorAll('.memory-item').length === 0) {
+        container.innerHTML = `<p class="no-memories">The jar is currently empty. ✨</p>`;
+      }
     }
   }
 </script>
