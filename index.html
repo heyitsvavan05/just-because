@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Bebi's Memory Jar</title>
 
-<link rel="stylesheet" href="style.css">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
@@ -120,21 +119,19 @@ body {
 
 </div>
 
-<script>
-const SUPABASE_URL = "https://kucwhpkcpfadsdrqvxjv.supabase.co";
-const SUPABASE_KEY = "YOUR_SUPABASE_ANON_KEY";
-const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-</script>
+<!-- REMOVE SUPABASE INIT (NOT NEEDED HERE) -->
 
 <script src="shared.js"></script>
 
 <script>
 function updateStatus() {
   const el = document.getElementById("home-status");
+
   if (typeof getAliveMood === "function") {
     el.innerText = getAliveMood();
   }
 }
+
 updateStatus();
 setInterval(updateStatus, 60000);
 </script>
