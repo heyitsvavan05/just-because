@@ -1,31 +1,146 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Memory Folders</title>
-    <link rel="stylesheet" href="style.css">
-</head>
-<body class="ngl-body">
-    
-    <div class="folder-header">
-        <h1>Memory Jar for my Bebi.</h1>
-        <p>Random late-night thoughts and sketches. For your eyes only. 🌌</p>
-    </div>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Bebi's Memory Jar</title>
+  <style>
+    body {
+      background-color: #0f172a;
+      color: #f8fafc;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+      padding: 20px;
+      box-sizing: border-box;
+      overflow-x: hidden;
+    }
 
-    <div class="folder-grid">
-        <div class="folder-card" onclick="location.href='inbox.html?type=voice'">
-            <div class="folder-icon">📂</div>
-            <p>Voice Notes</p>
-        </div>
-        <div class="folder-card" onclick="location.href='inbox.html?type=drawing'">
-            <div class="folder-icon">📂</div>
-            <p>Doodles</p>
-        </div>
-        <div class="folder-card" onclick="location.href='inbox.html?type=text'">
-            <div class="folder-icon">📂</div>
-            <p>Just Because</p>
-        </div>
+    /* Mood Menu Card Design */
+    .mood-card {
+      width: 100%;
+      max-width: 360px;
+      background: #1e293b;
+      padding: 30px 24px;
+      border-radius: 20px;
+      box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.4);
+      text-align: center;
+      box-sizing: border-box;
+    }
+
+    h1 {
+      font-size: 24px;
+      color: #f59e0b;
+      margin-top: 0;
+      margin-bottom: 10px;
+    }
+
+    .subtitle {
+      font-size: 14px;
+      color: #94a3b8;
+      margin-bottom: 25px;
+    }
+
+    .mood-options {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .mood-btn {
+      background: #334155;
+      color: white;
+      border: none;
+      padding: 16px;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      transition: background 0.2s, transform 0.1s;
+      text-decoration: none;
+    }
+
+    .mood-btn:active {
+      background: #475569;
+      transform: scale(0.98);
+    }
+
+    /* Specific Accent Highlights */
+    .mood-btn.happy { border-left: 5px solid #eab308; }
+    .mood-btn.sad { border-left: 5px solid #3b82f6; }
+    .mood-btn.miss { border-left: 5px solid #ec4899; }
+
+    /* Invisible background music element */
+    audio { display: none; }
+  </style>
+</head>
+<body>
+
+  <audio id="bgMusic" loop>
+    <source src="birthday-bgm.mp3" type="audio/mpeg">
+  </audio>
+
+  <div class="mood-card">
+    <h1>Bebi's Memory Jar 🍯</h1>
+    <p class="subtitle">How are you feeling right now?</p>
+    
+    <div class="mood-options">
+      <a href="happy.html" class="mood-btn happy" onclick="handleNavigation(event, 'happy.html')">
+        <span>✨</span> I want to smile
+      </a>
+      <a href="sad.html" class="mood-btn sad" onclick="handleNavigation(event, 'sad.html')">
+        <span>🌧️</span> I'm overthinking / sad
+      </a>
+      <a href="inbox.html" class="mood-btn miss" onclick="handleNavigation(event, 'inbox.html')">
+        <span>🤍</span> I miss you / Just because
+      </a>
     </div>
+  </div>
+
+  <div class="notification-footer" style="margin: 60px auto 20px auto; padding: 20px; max-width: 340px; text-align: center; border-top: 1px solid rgba(245, 158, 11, 0.2); box-sizing: border-box;">
+    <p style="margin: 0 0 14px 0; font-size: 13px; color: #94a3b8; font-style: italic; line-height: 1.5;">
+      Want to know the exact second I'm thinking of you? Tap below to get a WhatsApp ping whenever I drop a new memory into your jar. 🌌✨
+    </p>
+    <button onclick="activateWhatsAppNotifications()" style="background: #25D366; color: white; border: none; padding: 10px 20px; border-radius: 20px; font-weight: bold; font-size: 13px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 4px 14px rgba(37, 211, 102, 0.3); transition: transform 0.2s;">
+      📱 Turn on Notifications
+    </button>
+  </div>
+
+  <script>
+    // Audio engine interceptor to bypass browser autoplay protections
+    function handleNavigation(event, destinationUrl) {
+      event.preventDefault(); // Pause standard redirect instantly
+      
+      const audio = document.getElementById('bgMusic');
+      
+      // Fire audio context via user click footprint
+      audio.play().then(() => {
+        console.log("BGM pipeline running smoothly.");
+        window.location.href = destinationUrl; // Complete smooth page transition
+      }).catch(err => {
+        console.log("Audio play blocked or missing asset, advancing anyway:", err);
+        window.location.href = destinationUrl; 
+      });
+    }
+
+    // CallMeBot Activation Pipeline Handoff
+    function activateWhatsAppNotifications() {
+      const botNumber = "34644975353"; 
+      const prefilledText = encodeURIComponent("I allow callmebot to send me messages");
+      const waGateway = `https://api.whatsapp.com/send?phone=${botNumber}&text=${prefilledText}`;
+      
+      alert("This will open WhatsApp to link your notifications! Just hit 'Send' on the pre-filled message that appears so the bot knows it's allowed to ping you. ✨");
+      window.open(waGateway, '_blank');
+    }
+  </script>
+
 </body>
 </html>
