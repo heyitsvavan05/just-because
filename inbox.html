@@ -18,7 +18,24 @@ body {
   margin: auto;
 }
 
-/* FOLDER TABS */
+/* BACK NAVIGATION LINK */
+.back-link {
+  margin-bottom: 16px;
+}
+.back-link a {
+  color: #94a3b8;
+  text-decoration: none;
+  font-size: 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: color 0.2s;
+}
+.back-link a:hover {
+  color: #f59e0b;
+}
+
+/* FOLDER TABS SYSTEM */
 .tab-container {
   display: flex;
   justify-content: space-between;
@@ -54,6 +71,7 @@ h3 {
   font-size: 18px;
 }
 
+/* CARDS */
 .card {
   display: flex;
   align-items: center;
@@ -97,7 +115,7 @@ h3 {
   height: 28px;
 }
 
-/* Modal styling */
+/* OVERLAY POPUPS */
 .modal {
   position: fixed;
   inset: 0;
@@ -143,10 +161,8 @@ h3 {
 
 <div class="container">
   
-  <div style="margin-bottom: 14px;">
-    <a href="index.html" style="color: #94a3b8; text-decoration: none; font-size: 14px; display: inline-flex; align-items: center; gap: 4px;">
-      ⬅️ Back to Jar
-    </a>
+  <div class="back-link">
+    <a href="index.html">⬅️ Back to Jar</a>
   </div>
 
   <div class="tab-container">
@@ -155,7 +171,7 @@ h3 {
     <button class="tab-btn" id="tab-doodle" onclick="switchFolder('doodle')">🎨 Doodles</button>
   </div>
 
-  <h3 id="title">Loading...</h3>
+  <h3 id="title">Loading Folder...</h3>
   <div id="list"></div>
 </div>
 
@@ -167,13 +183,15 @@ h3 {
 </div>
 
 <script>
+// INITIALIZE DATABASE CLIENT
 const SUPABASE_URL = "https://kucwhpkcpfadsdrqvxjv.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt1Y3docGtjcGZhZHNkcnF2eGp2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4NjQ2NzAsImV4cCI6MjA5NDQ0MDY3MH0.PIUz00Qm_r6NkCKL8I4XQSSmvR02qt2VPwJQVY2s2qg";
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-// Evaluates URL parameters completely before applying UI styles
+// GRAB ROUTE FROM HOME PAGE CLICK
 let currentFolder = new URLSearchParams(window.location.search).get("view") || "text";
 
+// RUN SYNCHRONIZED TIMELINE ON LOAD
 window.onload = () => {
   switchFolder(currentFolder); 
 };
@@ -181,23 +199,24 @@ window.onload = () => {
 function switchFolder(folderType) {
   currentFolder = folderType;
 
-  // Clear all previous highlighted active bubble states completely
-  document.querySelectorAll('.tab-container .tab-btn').forEach(btn => {
+  // 1. Reset all tabs instantly
+  document.querySelectorAll('.tab-btn').forEach(btn => {
     btn.classList.remove('active');
   });
   
-  // Set the specific targeted folder state
+  // 2. Light up the specific target tab bubble
   const activeTab = document.getElementById(`tab-${folderType}`);
   if (activeTab) {
     activeTab.classList.add('active');
   }
 
-  // Sync text header updates cleanly
+  // 3. Update the matching section headers
   const titleEl = document.getElementById("title");
   if (folderType === "text") titleEl.innerText = "Messages";
   if (folderType === "voice") titleEl.innerText = "Voice Notes";
   if (folderType === "doodle") titleEl.innerText = "Doodles";
 
+  // 4. Fire clean database query execution
   loadMemories();
 }
 
