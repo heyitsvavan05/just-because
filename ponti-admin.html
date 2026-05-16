@@ -26,13 +26,25 @@ textarea, select, button {
   width: 100%;
   padding: 10px;
   margin-top: 10px;
+  border-radius: 8px;
+  border: none;
+}
+
+textarea {
+  min-height: 80px;
+}
+
+button {
+  cursor: pointer;
 }
 
 canvas {
   background: white;
   width: 100%;
   height: 300px;
+  border-radius: 10px;
   touch-action: none;
+  display: block;
 }
 </style>
 </head>
@@ -48,7 +60,7 @@ canvas {
   <option value="doodle">doodle</option>
 </select>
 
-<textarea id="text"></textarea>
+<textarea id="text" placeholder="Write something..."></textarea>
 
 <canvas id="canvas" style="display:none;"></canvas>
 
@@ -64,37 +76,103 @@ const SUPABASE_URL = "https://kucwhpkcpfadsdrqvxjv.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt1Y3docGtjcGZhZHNkcnF2eGp2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4NjQ2NzAsImV4cCI6MjA5NDQ0MDY3MH0.PIUz00Qm_r6NkCKL8I4XQSSmvR02qt2VPwJQVY2s2qg";
 const supabase = supabaseJs.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+/* =========================
+   CANVAS FIX (MOBILE SAFE)
+========================= */
+
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
 
+function resizeCanvas(){
+  const ratio = window.devicePixelRatio || 1;
+  canvas.width = canvas.offsetWidth * ratio;
+  canvas.height = 300 * ratio;
+  ctx.scale(ratio, ratio);
+
+  ctx.lineWidth = 3;
+  ctx.lineCap = "round";
+  ctx.strokeStyle = "#000";
+}
+
+resizeCanvas();
+window.addEventListener("resize", resizeCanvas);
+
+/* DRAWING (works on mobile + mouse) */
+
 let drawing = false;
 
-canvas.onmousedown = e => { drawing = true; ctx.beginPath(); draw(e); };
-canvas.onmouseup = () => drawing = false;
-canvas.onmousemove = draw;
+function getPos(e){
+  const rect = canvas.getBoundingClientRect();
+  return {
+    x: (e.touches ? e.touches[0].clientX : e.clientX) - rect.left,
+    y: (e.touches ? e.touches[0].clientY : e.clientY) - rect.top
+  };
+}
+
+function startDraw(e){
+  drawing = true;
+  const p = getPos(e);
+  ctx.beginPath();
+  ctx.moveTo(p.x, p.y);
+}
 
 function draw(e){
   if(!drawing) return;
-  const r = canvas.getBoundingClientRect();
-  ctx.lineTo(e.clientX - r.left, e.clientY - r.top);
+  e.preventDefault();
+
+  const p = getPos(e);
+  ctx.lineTo(p.x, p.y);
   ctx.stroke();
-  ctx.beginPath();
+}
+
+function stopDraw(){
+  drawing = false;
+}
+
+/* EVENTS */
+canvas.addEventListener("mousedown", startDraw);
+canvas.addEventListener("mousemove", draw);
+canvas.addEventListener("mouseup", stopDraw);
+canvas.addEventListener("mouseleave", stopDraw);
+
+canvas.addEventListener("touchstart", startDraw);
+canvas.addEventListener("touchmove", draw);
+canvas.addEventListener("touchend", stopDraw);
+
+/* =========================
+   UI
+========================= */
+
+function toggle(){
+  const type = document.getElementById("type").value;
+  canvas.style.display = type === "doodle" ? "block" : "none";
 }
 
 function clearCanvas(){
   ctx.clearRect(0,0,canvas.width,canvas.height);
 }
 
-function toggle(){
-  canvas.style.display = document.getElementById("type").value === "doodle" ? "block" : "none";
-}
+/* =========================
+   POST TO SUPABASE
+========================= */
 
 async function post(){
   const type = document.getElementById("type").value;
+
   let content = "";
 
-  if(type === "text") content = document.getElementById("text").value;
-  if(type === "doodle") content = canvas.toDataURL();
+  if(type === "text"){
+    content = document.getElementById("text").value.trim();
+  }
+
+  if(type === "doodle"){
+    content = canvas.toDataURL("image/png");
+  }
+
+  if(!content){
+    document.getElementById("status").innerText = "Empty!";
+    return;
+  }
 
   const { error } = await supabase
     .from("scrapbook")
