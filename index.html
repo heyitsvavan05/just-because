@@ -29,6 +29,10 @@ body {
   gap: 16px;
   align-items: center;
   color: white;
+  transition: transform 0.1s;
+}
+.card:active {
+  transform: scale(0.98);
 }
 .icon { font-size: 28px; }
 #home-status {
@@ -44,6 +48,7 @@ body {
     <p style="margin:4px 0;color:#94a3b8;">Open a folder to see memories</p>
     <p id="home-status"></p>
   </div>
+
   <a class="card" href="inbox.html?view=text">
     <div class="icon">💬</div><div>Messages</div>
   </a>
@@ -54,12 +59,18 @@ body {
     <div class="icon">🎨</div><div>Doodles</div>
   </a>
 </div>
+
 <script src="shared.js"></script>
 <script>
-document.getElementById("home-status").innerText = getAliveMood();
-setInterval(() => {
+// Safely catch if shared.js isn't fully loaded yet
+try {
   document.getElementById("home-status").innerText = getAliveMood();
-}, 60000);
+  setInterval(() => {
+    document.getElementById("home-status").innerText = getAliveMood();
+  }, 60000);
+} catch(e) {
+  document.getElementById("home-status").innerText = "Loading global heartbeats... 💕";
+}
 </script>
 </body>
 </html>
