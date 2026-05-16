@@ -84,7 +84,7 @@ const BebiEngine = (function() {
     return list[Math.floor(Math.random() * list.length)];
   }
 
-  // 6. THEME ENGINE (AUTO MOOD SHIFT)
+  // 6. THEME ENGINE (AUTO MOOD SHIFT WITH CARD THEMING)
   function applyThemeMood() {
     const times = getTimeData();
     const herHour = times.inHour; // Base the mood on her environment
@@ -94,10 +94,12 @@ const BebiEngine = (function() {
       root.style.setProperty("--accent-yellow", "#fbbf24");
       root.style.setProperty("--text-dim", "#94a3b8");
       root.style.setProperty("--bg-mood", "#0b1220"); 
+      root.style.setProperty("--card-mood", "#111c30"); // Premium dark-toned night cards
     } else {
       root.style.setProperty("--accent-yellow", "#fde047");
       root.style.setProperty("--text-dim", "#a3b1c6");
       root.style.setProperty("--bg-mood", "#0f172a"); 
+      root.style.setProperty("--card-mood", "#1e293b"); // Standard slate cards
     }
   }
 
