@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,80 +8,115 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
-body{background:#0f172a;color:white;font-family:sans-serif;margin:0}
-.container{max-width:420px;margin:auto}
-
-.card{
-  display:flex;
-  padding:15px;
-  border-bottom:1px solid #2d3748;
+body {
+  margin: 0;
+  background: #0f172a;
+  color: white;
+  font-family: sans-serif;
 }
 
-.icon{width:40px;height:40px;background:#1f2937;border-radius:50%;
-display:flex;align-items:center;justify-content:center;margin-right:10px}
+.container {
+  max-width: 420px;
+  margin: auto;
+}
 
-.modal{position:fixed;inset:0;background:rgba(0,0,0,.7);display:flex;align-items:center;justify-content:center}
-.box{background:white;color:black;padding:15px;border-radius:10px;max-width:90%}
-.hidden{display:none}
+.card {
+  display: flex;
+  padding: 16px;
+  border-bottom: 1px solid #2d3748;
+  cursor: pointer;
+}
+
+.icon {
+  width: 40px;
+  height: 40px;
+  background: #1f2937;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 50%;
+  margin-right: 12px;
+}
+
+.modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.7);
+  display: none;
+  justify-content: center;
+  align-items: center;
+}
+
+.modal-content {
+  background: white;
+  color: black;
+  padding: 20px;
+  border-radius: 12px;
+}
 </style>
 </head>
 
 <body>
 
 <div class="container">
-<h2 id="title">Inbox</h2>
-<div id="list"></div>
+  <h3 id="title" style="padding:10px;"></h3>
+  <div id="list"></div>
 </div>
 
-<div id="modal" class="modal hidden" onclick="closeModal()">
-<div class="box" onclick="event.stopPropagation()">
-<div id="modalBody"></div>
-</div>
+<div class="modal" id="modal" onclick="closeModal()">
+  <div class="modal-content" onclick="event.stopPropagation()">
+    <div id="modal-body"></div>
+    <button onclick="closeModal()">Close</button>
+  </div>
 </div>
 
 <script>
-const supabase = supabase.createClient(
-"https://kucwhpkcpfadsdrqvxjv.supabase.co",
-"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt1Y3docGtjcGZhZHNkcnF2eGp2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4NjQ2NzAsImV4cCI6MjA5NDQ0MDY3MH0.PIUz00Qm_r6NkCKL8I4XQSSmvR02qt2VPwJQVY2s2qg"
-);
+const SUPABASE_URL = "https://kucwhpkcpfadsdrqvxjv.supabase.co";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt1Y3docGtjcGZhZHNkcnF2eGp2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4NjQ2NzAsImV4cCI6MjA5NDQ0MDY3MH0.PIUz00Qm_r6NkCKL8I4XQSSmvR02qt2VPwJQVY2s2qg";
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const type = new URLSearchParams(location.search).get("view");
-
+const type = new URLSearchParams(location.search).get("view") || "text";
 document.getElementById("title").innerText = type.toUpperCase();
 
-async function load(){
-const {data}=await supabase.from("scrapbook").select("*").eq("type",type).order("created_at",{ascending:false});
+async function load() {
+  const { data } = await sb.from("scrapbook")
+    .select("*")
+    .eq("type", type)
+    .order("created_at", { ascending:false });
 
-const list=document.getElementById("list");
-list.innerHTML="";
+  const list = document.getElementById("list");
+  list.innerHTML = "";
 
-data.forEach(i=>{
-const div=document.createElement("div");
-div.className="card";
+  data?.forEach(item => {
+    const div = document.createElement("div");
+    div.className = "card";
 
-div.innerHTML=`
-<div class="icon">💌</div>
-<div>${i.content.slice(0,40)}</div>
-`;
+    div.innerHTML = `
+      <div class="icon">💌</div>
+      <div>${(item.content || "").slice(0, 40)}</div>
+    `;
 
-div.onclick=()=>open(i);
-list.appendChild(div);
-});
+    div.onclick = () => open(item);
+    list.appendChild(div);
+  });
 }
 
-function open(i){
-const m=document.getElementById("modal");
-const b=document.getElementById("modalBody");
+function open(item) {
+  const body = document.getElementById("modal-body");
 
-if(i.type==="doodle") b.innerHTML=`<img src="${i.content}" style="max-width:100%">`;
-else if(i.type==="voice") b.innerHTML=`<audio controls src="${i.content}"></audio>`;
-else b.innerHTML=`<pre>${i.content}</pre>`;
+  if (item.type === "doodle") {
+    body.innerHTML = `<img src="${item.content}" style="max-width:100%">`;
+  } else if (item.type === "voice") {
+    body.innerHTML = `<audio controls src="${item.content}" style="width:100%"></audio>`;
+  } else {
+    body.innerText = item.content;
+  }
 
-m.classList.remove("hidden");
+  document.getElementById("modal").style.display = "flex";
 }
 
-function closeModal(){
-document.getElementById("modal").classList.add("hidden");
+function closeModal() {
+  document.getElementById("modal").style.display = "none";
 }
 
 load();
