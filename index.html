@@ -36,7 +36,7 @@ body {
   color: white;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
   transition: transform 0.1s, box-shadow 0.1s, background 1.5s ease-in-out;
-  position: relative; /* CRUCIAL: Anchors the floating badges */
+  position: relative;
 }
 
 .card:active {
@@ -63,23 +63,22 @@ body {
   font-style: italic;
 }
 
-/* PREMIUM FLOATING APP-STYLE NOTIFICATION BADGE */
 .unread-badge {
   position: absolute;
-  top: -6px;   /* Pushes it up past the top border */
-  right: -6px; /* Pushes it out past the right border */
-  background: #ef4444; /* Vibrant iOS/Android Notification Red */
+  top: -6px;   
+  right: -6px; 
+  background: #ef4444; 
   color: white;
   font-size: 11px;
   font-weight: bold;
   min-width: 22px;
   height: 22px;
   padding: 0 6px;
-  border-radius: 50px; /* Clean pill shape */
-  display: none; /* Hidden by default, activated via JS engine */
+  border-radius: 50px; 
+  display: none; 
   justify-content: center;
   align-items: center;
-  border: 2px solid var(--card-mood, #1e293b); /* Clean mask outline that shifts dynamically with your mood engine backgrounds */
+  border: 2px solid var(--card-mood, #1e293b); 
   box-shadow: 0 3px 8px rgba(0, 0, 0, 0.3);
   box-sizing: border-box;
   z-index: 10;
@@ -99,7 +98,7 @@ body {
     <p id="whisper-message" style="margin: 10px 0 0 0; color: #f59e0b; font-size: 13px; font-style: italic; border-top: 1px solid #334155; padding-top: 8px; width: 100%;"></p>
   </div>
 
-  <a class="card" href="inbox.html?view=text">
+  <a class="card" href="inbox.html?view=text" id="link-text">
     <div class="icon">💬</div>
     <div>
       <div style="font-weight: bold; font-size: 16px;">Messages</div>
@@ -108,7 +107,7 @@ body {
     <div class="unread-badge" id="badge-text">0</div>
   </a>
 
-  <a class="card" href="inbox.html?view=voice">
+  <a class="card" href="inbox.html?view=voice" id="link-voice">
     <div class="icon">🎤</div>
     <div>
       <div style="font-weight: bold; font-size: 16px;">Voice Notes</div>
@@ -117,7 +116,7 @@ body {
     <div class="unread-badge" id="badge-voice">0</div>
   </a>
 
-  <a class="card" href="inbox.html?view=doodle">
+  <a class="card" href="inbox.html?view=doodle" id="link-doodle">
     <div class="icon">🎨</div>
     <div>
       <div style="font-weight: bold; font-size: 16px;">Doodles</div>
@@ -131,21 +130,16 @@ body {
 <script src="shared.js"></script>
 
 <script>
-  // Initialize Global Supabase Client Connections Securely
   const supabaseUrl = "https://kucwhpkcpfadsdrqvxjv.supabase.co";
   const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt1Y3docGtjcGZhZHNkcnF2eGp2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4NjQ2NzAsImV4cCI6MjA5NDQ0MDY3MH0.PIUz00Qm_r6NkCKL8I4XQSSmvR02qt2VPwJQVY2s2qg";
-
   const _supabase = supabase.createClient(supabaseUrl, supabaseKey);
-  console.log("🍯 Connected to database backend cluster securely.");
 
-  // RUN STATE ENGINE ON LOAD
   window.addEventListener('DOMContentLoaded', () => {
     fetchUnreadCounts();
   });
 
   async function fetchUnreadCounts() {
     try {
-      // Pull only the rows where is_read is false
       const { data, error } = await _supabase
         .from('scrapbook')
         .select('type')
@@ -153,7 +147,6 @@ body {
 
       if (error) throw error;
 
-      // Group counting bucket initialization
       let unreadCounts = { text: 0, voice: 0, doodle: 0 };
 
       data.forEach(item => {
@@ -162,10 +155,14 @@ body {
         }
       });
 
-      // Update the UI badges dynamically
       renderBadgeElement("badge-text", unreadCounts.text);
       renderBadgeElement("badge-voice", unreadCounts.voice);
       renderBadgeElement("badge-doodle", unreadCounts.doodle);
+
+      // Dynamically attach the dynamic counts to URL search strings
+      document.getElementById('link-text').href = `inbox.html?view=text&unread=${unreadCounts.text}`;
+      document.getElementById('link-voice').href = `inbox.html?view=voice&unread=${unreadCounts.voice}`;
+      document.getElementById('link-doodle').href = `inbox.html?view=doodle&unread=${unreadCounts.doodle}`;
 
       document.getElementById('home-status').innerText = "All folders fully synchronized.";
     } catch (err) {
@@ -178,12 +175,11 @@ body {
     const badge = document.getElementById(elementId);
     if (count > 0) {
       badge.innerText = count;
-      badge.style.display = "flex"; // Make visible if items exist
+      badge.style.display = "flex";
     } else {
-      badge.style.display = "none";  // Stay invisible if empty
+      badge.style.display = "none";
     }
   }
 </script>
-
 </body>
 </html>
