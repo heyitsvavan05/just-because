@@ -8,7 +8,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   
   <style>
-    /* Adding only the necessary modal and footer styles here so they don't break style.css */
+    /* Scoped layout rules strictly for the WhatsApp modal interaction */
     .modal-overlay {
       position: fixed;
       top: 0; left: 0; width: 100%; height: 100%;
@@ -54,17 +54,17 @@
   <p class="subtitle">Open a folder to see what I left for you...</p>
     
   <div class="folder-grid">
-    <a href="inbox.html?view=text" class="folder-wrapper messages">
+    <a href="inbox.html" class="folder-wrapper messages">
       <div class="folder-shape">💬</div>
       <div class="folder-label">Messages</div>
     </a>
     
-    <a href="inbox.html?view=voice" class="folder-wrapper voice">
+    <a href="inbox.html" class="folder-wrapper voice">
       <div class="folder-shape">🎤</div>
       <div class="folder-label">Voice Notes</div>
     </a>
     
-    <a href="inbox.html?view=doodle" class="folder-wrapper doodles">
+    <a href="inbox.html" class="folder-wrapper doodles">
       <div class="folder-shape">🎨</div>
       <div class="folder-label">Doodles</div>
     </a>
@@ -88,7 +88,7 @@
         📩 Request My Secret Key
       </button>
 
-      <p style="margin-bottom: 12px;"><strong>Step 2:</strong> Once the bot replies with your key, paste your details below to activate:</p>
+      <p style="margin-bottom: 12px;"><strong>Step 2:</strong> Paste your details below to activate:</p>
       
       <input type="tel" id="waNumberInput" class="modal-input" placeholder="WhatsApp Number (e.g. 63977539573)">
       <input type="text" id="waApiKeyInput" class="modal-input" placeholder="Secret API Key (e.g. 123456)">
@@ -101,12 +101,10 @@
   </div>
 
   <script>
-    // Supabase Access Engine Connections
     const SUPABASE_URL = "https://kucwhpkcpfadsdrqvxjv.supabase.co";
     const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt1Y3docGtjcGZhZHNkcnF2eGp2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4NjQ2NzAsImV4cCI6MjA5NDQ0MDY3MH0.PIUz00Qm_r6NkCKL8I4XQSSmvR02qt2VPwJQVY2s2qg";
     const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    // Modal Display Controls
     function openNotificationModal() {
       document.getElementById('notificationModal').classList.add('open');
     }
@@ -115,14 +113,14 @@
       document.getElementById('notificationModal').classList.remove('open');
     }
 
-    // CallMeBot Integration Gateway
+    // CallMeBot Access Key Tunnel
     function getCallMeBotKey() {
       const botNumber = "34644975353"; 
       const prefilledText = encodeURIComponent("I allow callmebot to send me messages");
       window.open(`https://api.whatsapp.com/send?phone=${botNumber}&text=${prefilledText}`, '_blank');
     }
 
-    // Database Sync Engine
+    // Database Sync Config Table Writers
     async function saveNotificationData() {
       const rawNumber = document.getElementById('waNumberInput').value.trim();
       const apiKey = document.getElementById('waApiKeyInput').value.trim();
@@ -139,7 +137,7 @@
       if (updateNum.error || updateKey.error) {
         alert("❌ Configuration failed: " + (updateNum.error?.message || updateKey.error?.message));
       } else {
-        alert("🎉 Notifications Linked Successfully! You will now get a WhatsApp ping whenever a new memory drops. 🥰");
+        alert("🎉 Notifications Linked Successfully! You can now overwrite this at any time. 🥰");
         closeNotificationModal();
       }
     }
