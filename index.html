@@ -3,73 +3,292 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Bebi's Memory Jar</title>
+<title>Bebi's Memory Jar 🍯</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 body {
   margin: 0;
   background: #0f172a;
-  font-family: sans-serif;
+  color: white;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  padding: 20px 10px;
   display: flex;
   justify-content: center;
-  color: white;
 }
 .wrapper {
   width: 100%;
   max-width: 420px;
-  padding: 20px;
 }
-.card {
+
+/* HEADER CARD */
+.header-card {
   background: #1e293b;
   padding: 20px;
   border-radius: 16px;
   margin-bottom: 16px;
-  text-decoration: none;
-  display: flex;
-  gap: 16px;
-  align-items: center;
-  color: white;
-  transition: transform 0.1s;
+  box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
 }
-.card:active {
-  transform: scale(0.98);
-}
-.icon { font-size: 28px; }
 #home-status {
   font-size: 13px;
   color: #94a3b8;
+  margin-top: 6px;
+  font-style: italic;
 }
+
+/* NAVIGATION FOLDER TABS */
+.tab-container {
+  display: flex;
+  justify-content: space-between;
+  background: #1e293b;
+  padding: 6px;
+  border-radius: 12px;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 6px -1px rgba(0,0,0,0.2);
+}
+.tab-btn {
+  flex: 1;
+  background: transparent;
+  color: #94a3b8;
+  border: none;
+  padding: 12px 0;
+  font-size: 13px;
+  font-weight: bold;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.tab-btn.active {
+  background: #0f172a;
+  color: #f59e0b;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);
+}
+
+h3 {
+  color: #f8fafc;
+  margin-top: 0;
+  border-bottom: 2px solid #1e293b;
+  padding-bottom: 8px;
+  font-size: 18px;
+}
+
+/* MEMORY CARDS */
+.card {
+  display: flex;
+  align-items: center;
+  padding: 16px;
+  background: #1e293b;
+  border-radius: 12px;
+  margin-bottom: 12px;
+  cursor: pointer;
+  box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+  transition: transform 0.1s;
+}
+.card:active { transform: scale(0.98); }
+
+.icon {
+  width: 44px;
+  height: 44px;
+  background: #0f172a;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 50%;
+  margin-right: 14px;
+  font-size: 20px;
+  flex-shrink: 0;
+}
+.preview-box {
+  font-size: 15px;
+  color: #cbd5e1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  width: 100%;
+}
+.preview-box img {
+  max-height: 50px;
+  border-radius: 6px;
+  background: white;
+}
+.preview-box audio {
+  max-width: 180px;
+  height: 28px;
+}
+
+/* POPUP VIEWERS */
+.modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.85);
+  display: none;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+  z-index: 100;
+  backdrop-filter: blur(4px);
+}
+.modal-content {
+  background: #1e293b;
+  color: #f8fafc;
+  padding: 24px;
+  border-radius: 16px;
+  width: 100%;
+  max-width: 360px;
+  box-shadow: 0 20px 25px -5px rgba(0,0,0,0.5);
+  box-sizing: border-box;
+  text-align: center;
+}
+#modal-body {
+  margin-bottom: 20px;
+  font-size: 16px;
+  line-height: 1.5;
+  color: #e2e8f0;
+}
+.modal-content button {
+  background: #f59e0b;
+  color: #0f172a;
+  font-weight: bold;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  cursor: pointer;
+  width: 100%;
+}
+.no-items { text-align: center; color: #64748b; margin-top: 40px; font-size: 15px; }
 </style>
 </head>
 <body>
+
 <div class="wrapper">
-  <div class="card" style="flex-direction:column; align-items:flex-start;">
-    <h2 style="color:#fde047;margin:0;">Bebi's Memory Jar 🍯</h2>
-    <p style="margin:4px 0;color:#94a3b8;">Open a folder to see memories</p>
-    <p id="home-status"></p>
+  
+  <div class="header-card">
+    <h2 style="color:#fde047; margin:0; font-size: 24px;">Bebi's Memory Jar 🍯</h2>
+    <p style="margin:4px 0 0 0; color:#94a3b8; font-size:14px;">Open a folder to see memories</p>
+    <p id="home-status">Syncing time status...</p>
+  </div>
+  
+  <div class="tab-container">
+    <button class="tab-btn active" id="tab-text" onclick="switchFolder('text')">💬 Messages</button>
+    <button class="tab-btn" id="tab-voice" onclick="switchFolder('voice')">🎤 Voice Notes</button>
+    <button class="tab-btn" id="tab-doodle" onclick="switchFolder('doodle')">🎨 Doodles</button>
   </div>
 
-  <a class="card" href="inbox.html?view=text">
-    <div class="icon">💬</div><div>Messages</div>
-  </a>
-  <a class="card" href="inbox.html?view=voice">
-    <div class="icon">🎤</div><div>Voice Notes</div>
-  </a>
-  <a class="card" href="inbox.html?view=doodle">
-    <div class="icon">🎨</div><div>Doodles</div>
-  </a>
+  <h3 id="title">Loading Folder Content...</h3>
+  <div id="list"></div>
+</div>
+
+<div class="modal" id="modal" onclick="closeModal()">
+  <div class="modal-content" onclick="event.stopPropagation()">
+    <div id="modal-body"></div>
+    <button onclick="closeModal()">Close Memory</button>
+  </div>
 </div>
 
 <script src="shared.js"></script>
+
 <script>
-// Safely catch if shared.js isn't fully loaded yet
-try {
-  document.getElementById("home-status").innerText = getAliveMood();
-  setInterval(() => {
+const SUPABASE_URL = "https://kucwhpkcpfadsdrqvxjv.supabase.co";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt1Y3docGtjcGZhZHNkcnF2eGp2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4NjQ2NzAsImV4cCI6MjA5NDQ0MDY3MH0.PIUz00Qm_r6NkCKL8I4XQSSmvR02qt2VPwJQVY2s2qg";
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// Check if she landed on a specific link query, otherwise start with Messages
+let currentFolder = new URLSearchParams(window.location.search).get("view") || "text";
+
+window.onload = () => {
+  switchFolder(currentFolder);
+  
+  // Safe execution of shared.js strings
+  try {
     document.getElementById("home-status").innerText = getAliveMood();
-  }, 60000);
-} catch(e) {
-  document.getElementById("home-status").innerText = "Loading global heartbeats... 💕";
+    setInterval(() => {
+      document.getElementById("home-status").innerText = getAliveMood();
+    }, 60000);
+  } catch(e) {
+    document.getElementById("home-status").innerText = "Always on your mind... ❤️";
+  }
+};
+
+function switchFolder(folderType) {
+  currentFolder = folderType;
+
+  // Active state button management
+  document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+  document.getElementById(`tab-${folderType}`).classList.add('active');
+
+  // Sync section headers
+  const titleEl = document.getElementById("title");
+  if (folderType === "text") titleEl.innerText = "Messages";
+  if (folderType === "voice") titleEl.innerText = "Voice Notes";
+  if (folderType === "doodle") titleEl.innerText = "Doodles";
+
+  loadMemories();
+}
+
+async function loadMemories() {
+  const list = document.getElementById("list");
+  list.innerHTML = `<p class="no-items" style="color: #f59e0b;">Fetching items...</p>`;
+
+  const { data, error } = await sb.from("scrapbook")
+    .select("*")
+    .eq("type", currentFolder)
+    .order("created_at", { ascending: false });
+
+  list.innerHTML = "";
+
+  if(error || !data || data.length === 0) {
+    list.innerHTML = `<p class="no-items">This folder is empty right now. ✨</p>`;
+    return;
+  }
+
+  data.forEach(item => {
+    const div = document.createElement("div");
+    div.className = "card";
+
+    let folderIcon = "💌";
+    let previewElement = "";
+
+    if (item.type === "text") {
+      folderIcon = "💬";
+      previewElement = `<span>${item.content.slice(0, 40)}${item.content.length > 40 ? '...' : ''}</span>`;
+    } else if (item.type === "voice") {
+      folderIcon = "🎤";
+      previewElement = `<audio src="${item.content}" controls preload="metadata"></audio>`;
+    } else if (item.type === "doodle") {
+      folderIcon = "🎨";
+      previewElement = `<img src="${item.content}" alt="Doodle"/>`;
+    }
+
+    div.innerHTML = `
+      <div class="icon">${folderIcon}</div>
+      <div class="preview-box">${previewElement}</div>
+    `;
+
+    div.onclick = () => openMemory(item);
+    list.appendChild(div);
+  });
+}
+
+function openMemory(item) {
+  const body = document.getElementById("modal-body");
+
+  if (item.type === "doodle") {
+    body.innerHTML = `<img src="${item.content}" style="max-width:100%; border-radius:8px; background:white;">`;
+  } else if (item.type === "voice") {
+    body.innerHTML = `<p style="margin-bottom:10px; font-size:14px; color:#94a3b8;">Voice Note:</p><audio controls src="${item.content}" style="width:100%" autoplay></audio>`;
+  } else {
+    body.innerText = item.content;
+  }
+
+  document.getElementById("modal").style.display = "flex";
+}
+
+function closeModal() {
+  document.getElementById("modal").style.display = "none";
+  const audioEl = document.querySelector('#modal-body audio');
+  if(audioEl) {
+      audioEl.pause();
+      audioEl.currentTime = 0;
+  }
 }
 </script>
 </body>
