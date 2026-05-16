@@ -5,6 +5,15 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Ponti Admin Panel</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+  <script>
+    (function() {
+        // Your active Public Key configuration
+        emailjs.init("s8i1NnlReuRH6jqdF"); 
+    })();
+  </script>
+
   <style>
     body {
       background-color: #0f172a;
@@ -238,7 +247,7 @@
   <p id="status-msg"></p>
 </div>
 
-<div class="manager-card">
+<div class="container manager-card">
   <h3>Manage Saved Memories</h3>
   <div id="memoryListContainer" class="memory-list">
     <p class="no-memories">Loading database...</p>
@@ -249,6 +258,10 @@
   const SUPABASE_URL = "https://kucwhpkcpfadsdrqvxjv.supabase.co";
   const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt1Y3docGtjcGZhZHNkcnF2eGp2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4NjQ2NzAsImV4cCI6MjA5NDQ0MDY3MH0.PIUz00Qm_r6NkCKL8I4XQSSmvR02qt2VPwJQVY2s2qg";
   const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+  // Active integrated EmailJS token configurations
+  const EMAILJS_SERVICE_ID = "service_m0nwde2";
+  const EMAILJS_TEMPLATE_ID = "template_pl7h7e9";
 
   window.onload = () => {
     loadMemoriesList();
@@ -408,8 +421,9 @@
     if (error) {
       statusMsg.innerText = "❌ Error: " + error.message;
     } else {
-      statusMsg.innerText = "🎉 Saved! Notifying her...";
+      statusMsg.innerText = "🎉 Saved! Dispatching priority email...";
 
+      // Triggers the automated email notification handshake
       triggerAutomatedNotification();
 
       clearCanvas();
@@ -420,33 +434,28 @@
     }
   }
 
+  /* HIGH-PRIORITY EMAIL ALERTS FOR PREBUILT EMAILJS WELCOME TEMPLATE */
   async function triggerAutomatedNotification() {
-    const { data, error } = await _supabase.from('config_settings').select('key_name, value');
+    console.log("Initiating server email handshake...");
 
-    if (error || !data) {
-      console.log("Could not pull routing tokens:", error);
-      return;
-    }
+    const templateParams = {
+      to_name: "Bebi"
+    };
 
-    const numConfig = data.find(item => item.key_name === 'wa_number');
-    const keyConfig = data.find(item => item.key_name === 'wa_api_key');
+    const emailOptions = {
+      headers: {
+        'X-Priority': '1',                
+        'X-MSMail-Priority': 'High',      
+        'Importance': 'high'              
+      }
+    };
 
-    if (!numConfig || !keyConfig || numConfig.value === 'PENDING') {
-      console.log("No configuration setup active.");
-      return;
-    }
-
-    const targetNumber = numConfig.value;
-    const activeApiKey = keyConfig.value; 
-
-    const message = "Hey Bebi! I just dropped something into your jar. Go check it! 🌌";
-    const encodedMessage = encodeURIComponent(message);
-
-    const apiEndpoint = `https://api.callmebot.com/whatsapp.php?phone=${targetNumber}&text=${encodedMessage}&apikey=${activeApiKey}`;
-
-    fetch(apiEndpoint, { mode: 'no-cors' })
-      .then(() => console.log("Background webhook pushed."))
-      .catch(err => console.log("Pipeline logging issue:", err));
+    emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, templateParams, emailOptions)
+      .then((response) => {
+         console.log("System alert delivered successfully!", response.status, response.text);
+      }, (err) => {
+         console.log("Email pipeline block error:", err);
+      });
   }
 
   async function loadMemoriesList() {
@@ -484,24 +493,22 @@
     });
   }
 
-  /* FIXED FOR RELIABLE DATABASE REMOVAL */
   async function deleteMemoryRow(id) {
     if(!confirm("Are you sure you want to permanently delete this memory?")) return;
-    
-    // Explicitly enforce number parsing formatting for database row indexing 
+
     const targetId = parseInt(id, 10);
-    
+
     const { error } = await _supabase
       .from('scrapbook')
       .delete()
       .eq('id', targetId);
 
     if (error) {
-      alert("Could not remove row: " + error.message + "\n\n⚠️ NOTE: If this error says policy template missing, you need to add a DELETE rule in your Supabase dashboard policies section for table 'scrapbook'.");
+      alert("Could not remove row: " + error.message);
     } else {
       const element = document.getElementById(`mem-row-${id}`);
       if(element) element.remove();
-      
+
       const container = document.getElementById('memoryListContainer');
       if (!container || container.querySelectorAll('.memory-item').length === 0) {
         container.innerHTML = `<p class="no-memories">The jar is currently empty. ✨</p>`;
