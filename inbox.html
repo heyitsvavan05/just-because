@@ -29,27 +29,35 @@
     </div>
 
     <script>
-        // FIXED Live Connection Configuration
         const SUPABASE_URL = "https://kucwhpkcpfadsdrqvxjv.supabase.co";
         const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt1Y3docGtjcGZhZHNkcnF2eGp2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4NjQ2NzAsImV4cCI6MjA5NDQ0MDY3MH0.PIUz00Qm_r6NkCKL8I4XQSSmvR02qt2VPwJQVY2s2qg";
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+        // FIXED: Changed parameter key from 'type' to 'view' to match your index.html links
         const urlParams = new URLSearchParams(window.location.search);
-        let folderType = urlParams.get('type') || 'text';
-        
-        let dbQueryType = folderType;
-        if (folderType === 'drawing') {
-            dbQueryType = 'doodle'; 
-        }
+        let folderType = urlParams.get('view') || 'text'; 
 
-        const titles = { 'voice': 'VOICE NOTES', 'drawing': 'DOODLES', 'text': 'JUST BECAUSE' };
+        // Map the title text depending on what folder parameter she opened
+        const titles = { 
+            'text': 'MESSAGES', 
+            'voice': 'VOICE NOTES', 
+            'doodle': 'DOODLES' 
+        };
         document.getElementById('folder-title').innerText = titles[folderType] || 'INBOX';
+
+        // Map matching display icons to give her dynamic feedback inside the custom inbox row layout
+        const inboxIcons = {
+            'text': '💬',
+            'voice': '🎤',
+            'doodle': '🎨'
+        };
+        const currentIcon = inboxIcons[folderType] || '❤️';
 
         async function loadNotes() {
             const { data, error } = await _supabase
                 .from('scrapbook')
                 .select('*')
-                .eq('type', dbQueryType) 
+                .eq('type', folderType) // Matches 'text', 'voice', or 'doodle' directly from the DB row strings
                 .order('created_at', { ascending: false });
 
             const list = document.getElementById('inbox-list');
@@ -69,12 +77,12 @@
                 const card = document.createElement('div');
                 card.className = 'ngl-card';
                 
-                const previewText = item.type === 'doodle' ? 'Sent a doodle...' : 
-                                   item.type === 'voice' ? 'Sent a voice note...' : 
-                                   item.content;
+                let previewText = item.content;
+                if (item.type === 'doodle') previewText = 'Sent a doodle...';
+                if (item.type === 'voice') previewText = 'Sent a voice note...';
 
                 card.innerHTML = `
-                    <div class="ngl-mail-icon">❤️</div>
+                    <div class="ngl-mail-icon">${currentIcon}</div>
                     <div class="ngl-text-content">
                         <p>${previewText.substring(0, 35)}${previewText.length > 35 ? '...' : ''}</p>
                         <span>${new Date(item.created_at).toLocaleDateString()}</span>
