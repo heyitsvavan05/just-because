@@ -27,7 +27,8 @@ body {
 
 /* Enhancements to match the premium dark UI */
 .card {
-  background: #1e293b;
+  /* UPDATED: Links directly to the dynamic card background system */
+  background: var(--card-mood, #1e293b);
   padding: 20px;
   border-radius: 16px;
   margin-bottom: 16px;
@@ -37,6 +38,7 @@ body {
   align-items: center;
   color: white;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  /* Added background animation fade to matching smooth transition */
   transition: transform 0.1s, box-shadow 0.1s, background 1.5s ease-in-out;
 }
 
@@ -76,7 +78,7 @@ body {
     <h2 style="color: var(--accent-yellow, #fde047); margin:0; font-size: 24px;">Bebi's Memory Jar 🍯</h2>
     <p style="margin:4px 0 0 0; color: var(--text-dim, #94a3b8); font-size: 14px;">Open a folder to see memories</p>
     <p id="home-status">Syncing global heartbeat...</p>
-    
+
     <p id="whisper-message" style="margin: 10px 0 0 0; color: #f59e0b; font-size: 13px; font-style: italic; border-top: 1px solid #334155; padding-top: 8px; width: 100%;"></p>
   </div>
 
