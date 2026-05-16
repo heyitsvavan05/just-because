@@ -2,61 +2,39 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Ponti Admin Panel v2 FINAL</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin</title>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
-
-<script>
-emailjs.init("s8i1NnlReuRH6jqdF");
-</script>
 
 <style>
-body{
-  background:#0f172a;
-  color:white;
-  font-family:system-ui;
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  padding:20px;
+body {
+  background: #0f172a;
+  color: white;
+  font-family: sans-serif;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
-.container{
-  width:100%;
-  max-width:420px;
-  background:#1e293b;
-  padding:20px;
-  border-radius:16px;
-  margin-bottom:20px;
+.container {
+  max-width: 400px;
+  width: 100%;
+  background: #1e293b;
+  padding: 20px;
+  margin-top: 20px;
+  border-radius: 12px;
 }
 
-canvas{
-  background:white;
-  border-radius:12px;
-  touch-action:none;
+textarea, select, button {
+  width: 100%;
+  margin-top: 10px;
+  padding: 10px;
 }
-
-/* buttons */
-.btn{
-  padding:8px 12px;
-  border-radius:20px;
-  border:none;
-  background:#334155;
-  color:white;
-}
-
-.tools{display:flex;gap:10px;margin:10px 0;}
-
-.palette{display:flex;gap:8px;margin:10px 0;flex-wrap:wrap;}
-.color{width:22px;height:22px;border-radius:50%;border:2px solid transparent;cursor:pointer;}
-.color.active{border-color:#f59e0b;}
-
-.actionRow{
-  display:flex;
-  gap:10px;
-  margin-top:10px;
+canvas {
+  background: white;
+  width: 100%;
+  height: 300px;
 }
 </style>
 </head>
@@ -64,178 +42,77 @@ canvas{
 <body>
 
 <div class="container">
-<h2>Send Memory v2 FINAL</h2>
+
+<h2>Send Memory</h2>
 
 <select id="typeSelect" onchange="toggle()">
-  <option value="text">Text</option>
-  <option value="doodle">Doodle</option>
-  <option value="voice">Voice</option>
+  <option value="text">text</option>
+  <option value="doodle">doodle</option>
+  <option value="voice">voice</option>
 </select>
 
-<textarea id="textContent" placeholder="message"></textarea>
+<textarea id="text"></textarea>
 
-<div id="drawBox" style="display:none;">
+<canvas id="canvas" style="display:none;"></canvas>
+<button onclick="clearCanvas()">Clear</button>
 
-  <div class="tools">
-    <button class="btn" id="penBtn" onclick="setMode('pen')">Pen</button>
-    <button class="btn" id="highBtn" onclick="setMode('high')">Highlighter</button>
-  </div>
+<button onclick="post()">Post</button>
 
-  <canvas id="canvas" width="340" height="360"></canvas>
-
-  <div class="palette">
-    <div class="color active" style="background:#0f172a" onclick="setColor('#0f172a',this)"></div>
-    <div class="color" style="background:#ef4444" onclick="setColor('#ef4444',this)"></div>
-    <div class="color" style="background:#3b82f6" onclick="setColor('#3b82f6',this)"></div>
-    <div class="color" style="background:#22c55e" onclick="setColor('#22c55e',this)"></div>
-    <div class="color" style="background:#f97316" onclick="setColor('#f97316',this)"></div>
-  </div>
-
-  <div class="actionRow">
-    <button onclick="undo()">↩ Undo</button>
-    <button onclick="redo()">↪ Redo</button>
-    <button onclick="clearCanvas()">Clear</button>
-  </div>
-
-</div>
-
-<div id="voiceBox" style="display:none;">
-  <button onclick="alert('voice later')">Record</button>
-</div>
-
-<button onclick="save()">Save Memory</button>
 <p id="status"></p>
+
 </div>
 
 <script>
-const sb = supabase.createClient(
-"https://kucwhpkcpfadsdrqvxjv.supabase.co",
-"YOUR_KEY"
-);
+const SUPABASE_URL = "https://kucwhpkcpfadsdrqvxjv.supabase.co";
+const SUPABASE_KEY = "YOUR_SUPABASE_ANON_KEY";
+const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-/* CANVAS STATE SYSTEM */
-const canvas=document.getElementById("canvas");
-const ctx=canvas.getContext("2d");
+const canvas = document.getElementById("canvas");
+const ctx = canvas.getContext("2d");
 
-let drawing=false;
-let mode="pen";
-let color="#0f172a";
+let drawing = false;
 
-let history=[];
-let step=-1;
+canvas.onmousedown = e => { drawing = true; ctx.beginPath(); draw(e); };
+canvas.onmouseup = () => drawing = false;
+canvas.onmousemove = draw;
 
-function saveState(){
-  step++;
-  history = history.slice(0, step);
-  history.push(canvas.toDataURL());
-}
-
-function restore(){
-  const img=new Image();
-  img.src=history[step];
-  img.onload=()=>{
-    ctx.clearRect(0,0,canvas.width,canvas.height);
-    ctx.drawImage(img,0,0);
-  };
-}
-
-/* DRAW */
-function setMode(m){
-  mode=m;
-  document.getElementById("penBtn").style.background = m==="pen"?"#f59e0b":"#334155";
-  document.getElementById("highBtn").style.background = m==="high"?"#f59e0b":"#334155";
-}
-
-function setColor(c,el){
-  color=c;
-  document.querySelectorAll(".color").forEach(x=>x.classList.remove("active"));
-  el.classList.add("active");
-}
-
-function style(){
-  ctx.lineCap="round";
-  ctx.lineJoin="round";
-
-  if(mode==="pen"){
-    ctx.strokeStyle=color;
-    ctx.lineWidth=4;
-    ctx.globalAlpha=1;
-  } else {
-    ctx.strokeStyle=color;
-    ctx.lineWidth=18;
-    ctx.globalAlpha=0.3;
-  }
-}
-
-function start(e){
-  drawing=true;
-  ctx.beginPath();
-  saveState();
-}
-
-function draw(e){
-  if(!drawing)return;
-  const r=canvas.getBoundingClientRect();
-  const x=(e.touches?e.touches[0].clientX:e.clientX)-r.left;
-  const y=(e.touches?e.touches[0].clientY:e.clientY)-r.top;
-
-  style();
-  ctx.lineTo(x,y);
+function draw(e) {
+  if (!drawing) return;
+  const r = canvas.getBoundingClientRect();
+  ctx.lineTo(e.clientX - r.left, e.clientY - r.top);
   ctx.stroke();
   ctx.beginPath();
-  ctx.moveTo(x,y);
 }
 
-canvas.onmousedown=start;
-canvas.onmousemove=draw;
-canvas.onmouseup=()=>drawing=false;
-
-canvas.ontouchstart=start;
-canvas.ontouchmove=(e)=>{e.preventDefault();draw(e)};
-canvas.ontouchend=()=>drawing=false;
-
-/* UNDO REDO */
-function undo(){
-  if(step<=0)return;
-  step--;
-  restore();
-}
-
-function redo(){
-  if(step<history.length-1){
-    step++;
-    restore();
-  }
-}
-
-function clearCanvas(){
+function clearCanvas() {
   ctx.clearRect(0,0,canvas.width,canvas.height);
-  saveState();
 }
 
-/* UI */
-function toggle(){
-  const v=document.getElementById("typeSelect").value;
-  document.getElementById("drawBox").style.display=v==="doodle"?"block":"none";
-  document.getElementById("voiceBox").style.display=v==="voice"?"block":"none";
+function toggle() {
+  document.getElementById("canvas").style.display =
+    document.getElementById("typeSelect").value === "doodle"
+    ? "block" : "none";
 }
 
-/* SAVE */
-async function save(){
-  const type=document.getElementById("typeSelect").value;
-  let content="";
+async function post() {
+  const type = document.getElementById("typeSelect").value;
 
-  if(type==="text") content=document.getElementById("textContent").value;
-  if(type==="doodle") content=canvas.toDataURL();
-  if(type==="voice") content="voice";
+  let content = "";
 
-  if(!content) return;
+  if (type === "text") {
+    content = document.getElementById("text").value;
+  }
 
-  await sb.from("scrapbook").insert([{type,content}]);
+  if (type === "doodle") {
+    content = canvas.toDataURL();
+  }
 
-  document.getElementById("status").innerText="Saved ✔";
+  const { error } = await _supabase
+    .from("scrapbook")
+    .insert([{ type, content }]);
 
-  emailjs.send("service_m0nwde2","template_pl7h7e9",{name:"Bebi"});
+  document.getElementById("status").innerText =
+    error ? error.message : "Saved ✔";
 }
 </script>
 
