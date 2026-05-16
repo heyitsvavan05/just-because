@@ -2,124 +2,98 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Inbox</title>
+<title>Admin</title>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
-body {
-  margin: 0;
-  background: #0f172a;
-  color: white;
-  font-family: sans-serif;
+body { background:#0f172a; color:white; font-family:sans-serif; display:flex; justify-content:center; }
+.box { max-width:420px; width:100%; padding:20px; }
+
+textarea, select, button { width:100%; margin-top:10px; padding:10px; }
+
+canvas {
+  background:white;
+  width:100%;
+  height:300px;
+  touch-action:none;
 }
 
-.container {
-  max-width: 420px;
-  margin: auto;
-}
-
-.card {
-  display: flex;
-  padding: 16px;
-  border-bottom: 1px solid #2d3748;
-  cursor: pointer;
-}
-
-.icon {
-  width: 40px;
-  height: 40px;
-  background: #1f2937;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  border-radius: 50%;
-  margin-right: 12px;
-}
-
-.modal {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.7);
-  display: none;
-  justify-content: center;
-  align-items: center;
-}
-
-.modal-content {
-  background: white;
-  color: black;
-  padding: 20px;
-  border-radius: 12px;
+.delete {
+  background:red;
+  color:white;
+  border:none;
+  padding:6px;
+  margin-top:10px;
 }
 </style>
 </head>
 
 <body>
 
-<div class="container">
-  <h3 id="title" style="padding:10px;"></h3>
-  <div id="list"></div>
-</div>
+<div class="box">
 
-<div class="modal" id="modal" onclick="closeModal()">
-  <div class="modal-content" onclick="event.stopPropagation()">
-    <div id="modal-body"></div>
-    <button onclick="closeModal()">Close</button>
-  </div>
+<h2>Send Memory</h2>
+
+<select id="type" onchange="toggle()">
+  <option value="text">text</option>
+  <option value="doodle">doodle</option>
+  <option value="voice">voice</option>
+</select>
+
+<textarea id="text"></textarea>
+
+<canvas id="canvas" style="display:none;"></canvas>
+
+<button onclick="clearCanvas()">Clear</button>
+<button onclick="post()">Post</button>
+
+<p id="status"></p>
+
 </div>
 
 <script>
-const SUPABASE_URL = "https://kucwhpkcpfadsdrqvxjv.supabase.co";
-const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt1Y3docGtjcGZhZHNkcnF2eGp2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4NjQ2NzAsImV4cCI6MjA5NDQ0MDY3MH0.PIUz00Qm_r6NkCKL8I4XQSSmvR02qt2VPwJQVY2s2qg";
-const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const sb = supabase.createClient(
+  "https://kucwhpkcpfadsdrqvxjv.supabase.co",
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt1Y3docGtjcGZhZHNkcnF2eGp2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4NjQ2NzAsImV4cCI6MjA5NDQ0MDY3MH0.PIUz00Qm_r6NkCKL8I4XQSSmvR02qt2VPwJQVY2s2qg"
+);
 
-const type = new URLSearchParams(location.search).get("view") || "text";
-document.getElementById("title").innerText = type.toUpperCase();
+const canvas = document.getElementById("canvas");
+const ctx = canvas.getContext("2d");
 
-async function load() {
-  const { data } = await sb.from("scrapbook")
-    .select("*")
-    .eq("type", type)
-    .order("created_at", { ascending:false });
+let drawing = false;
 
-  const list = document.getElementById("list");
-  list.innerHTML = "";
+canvas.onmousedown = e => { drawing = true; ctx.beginPath(); draw(e); };
+canvas.onmouseup = () => drawing = false;
+canvas.onmousemove = draw;
 
-  data?.forEach(item => {
-    const div = document.createElement("div");
-    div.className = "card";
-
-    div.innerHTML = `
-      <div class="icon">💌</div>
-      <div>${(item.content || "").slice(0, 40)}</div>
-    `;
-
-    div.onclick = () => open(item);
-    list.appendChild(div);
-  });
+function draw(e){
+  if(!drawing) return;
+  const r = canvas.getBoundingClientRect();
+  ctx.lineTo(e.clientX - r.left, e.clientY - r.top);
+  ctx.stroke();
+  ctx.beginPath();
 }
 
-function open(item) {
-  const body = document.getElementById("modal-body");
-
-  if (item.type === "doodle") {
-    body.innerHTML = `<img src="${item.content}" style="max-width:100%">`;
-  } else if (item.type === "voice") {
-    body.innerHTML = `<audio controls src="${item.content}" style="width:100%"></audio>`;
-  } else {
-    body.innerText = item.content;
-  }
-
-  document.getElementById("modal").style.display = "flex";
+function clearCanvas(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
 }
 
-function closeModal() {
-  document.getElementById("modal").style.display = "none";
+function toggle(){
+  canvas.style.display = document.getElementById("type").value === "doodle" ? "block" : "none";
 }
 
-load();
+async function post(){
+  const type = document.getElementById("type").value;
+
+  let content = "";
+  if(type === "text") content = document.getElementById("text").value;
+  if(type === "doodle") content = canvas.toDataURL();
+
+  await sb.from("scrapbook").insert([{ type, content }]);
+
+  document.getElementById("status").innerText = "Saved ✔";
+}
 </script>
 
 </body>
