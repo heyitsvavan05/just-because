@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Inbox</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
@@ -11,185 +11,109 @@
 body {
   margin: 0;
   background: #0f172a;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   color: white;
+  font-family: sans-serif;
 }
 
-.ngl-container {
-  max-width: 420px;
-  margin: auto;
-}
+.container { max-width: 420px; margin: auto; }
 
-.ngl-header {
-  position: sticky;
-  top: 0;
-  background: #0f172a;
+.card {
   display: flex;
   justify-content: space-between;
-  padding: 1rem;
+  padding: 14px;
   border-bottom: 1px solid #2d3748;
 }
 
-.ngl-card {
-  display: flex;
-  padding: 1rem;
-  border-bottom: 1px solid #2d3748;
-  cursor: pointer;
+.delete {
+  background: #ef4444;
+  border: none;
+  color: white;
+  padding: 6px 10px;
 }
-
-.ngl-mail-icon {
-  width: 45px;
-  height: 45px;
-  border-radius: 50%;
-  background: #1f2937;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  margin-right: 12px;
-}
-
-.ngl-text-content p {
-  margin: 0;
-  font-size: 14px;
-}
-
-.ngl-text-content span {
-  font-size: 11px;
-  color: #94a3b8;
-}
-
 .modal {
   position: fixed;
   inset: 0;
   background: rgba(0,0,0,0.7);
-  display: flex;
+  display: none;
   justify-content: center;
   align-items: center;
 }
-
-.modal-content {
+.modal-inner {
   background: white;
   color: black;
   padding: 20px;
-  border-radius: 12px;
-  max-width: 90%;
+  border-radius: 10px;
 }
-
-.hidden { display: none; }
 </style>
 </head>
 
 <body>
 
-<div class="ngl-container">
-
-<div class="ngl-header">
-  <div onclick="location.href='index.html'">◀</div>
-
-  <div>
-    <div id="folder-title">INBOX</div>
-    <div id="inbox-status" style="font-size:12px;color:#94a3b8;"></div>
-  </div>
-
+<div class="container">
+  <h3 id="title"></h3>
+  <div id="list"></div>
 </div>
 
-<main id="inbox-list"></main>
-
-</div>
-
-<!-- MODAL -->
-<div id="modal" class="modal hidden" onclick="closeModal()">
-  <div class="modal-content" onclick="event.stopPropagation()">
+<div class="modal" id="modal" onclick="closeModal()">
+  <div class="modal-inner" onclick="event.stopPropagation()">
     <div id="modal-body"></div>
     <button onclick="closeModal()">Close</button>
   </div>
 </div>
 
-<!-- SUPABASE (FIXED + CONSISTENT) -->
 <script>
 const SUPABASE_URL = "https://kucwhpkcpfadsdrqvxjv.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt1Y3docGtjcGZhZHNkcnF2eGp2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4NjQ2NzAsImV4cCI6MjA5NDQ0MDY3MH0.PIUz00Qm_r6NkCKL8I4XQSSmvR02qt2VPwJQVY2s2qg";
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-</script>
+const type = new URLSearchParams(location.search).get("view") || "text";
+document.getElementById("title").innerText = type.toUpperCase();
 
-<!-- SHARED SYSTEM -->
-<script src="shared.js"></script>
+async function load() {
+  const { data } = await sb.from("scrapbook").select("*").eq("type", type);
 
-<script>
-const urlParams = new URLSearchParams(location.search);
-const folderType = urlParams.get("view") || "text";
-
-document.getElementById("folder-title").innerText =
-  folderType.toUpperCase();
-
-// status (alive system safe)
-if (typeof getInboxStatus === "function") {
-  document.getElementById("inbox-status").innerText = getInboxStatus();
-}
-
-async function loadNotes() {
-
-  const { data, error } = await supabaseClient
-    .from("scrapbook")
-    .select("*")
-    .eq("type", folderType)
-    .order("created_at", { ascending: false });
-
-  const list = document.getElementById("inbox-list");
+  const list = document.getElementById("list");
   list.innerHTML = "";
-
-  if (error) {
-    list.innerHTML = "<p style='text-align:center;color:red'>Failed to load</p>";
-    return;
-  }
-
-  if (!data || data.length === 0) {
-    list.innerHTML = "<p style='text-align:center;color:#94a3b8'>Empty</p>";
-    return;
-  }
 
   data.forEach(item => {
     const div = document.createElement("div");
-    div.className = "ngl-card";
-
-    const preview =
-      item.type === "doodle" ? "🎨 Doodle" :
-      item.type === "voice" ? "🎤 Voice Note" :
-      (item.content || "").slice(0, 40);
+    div.className = "card";
 
     div.innerHTML = `
-      <div class="ngl-mail-icon">💌</div>
-      <div class="ngl-text-content">
-        <p>${preview}</p>
-        <span>${new Date(item.created_at).toLocaleDateString()}</span>
-      </div>
+      <span>${item.type}</span>
+      <button class="delete" onclick="del('${item.id}')">Delete</button>
     `;
 
-    div.onclick = () => openModal(item);
+    div.onclick = () => open(item);
     list.appendChild(div);
   });
 }
 
-function openModal(item) {
+function open(item) {
+  const modal = document.getElementById("modal");
   const body = document.getElementById("modal-body");
 
   if (item.type === "doodle") {
     body.innerHTML = `<img src="${item.content}" style="max-width:100%">`;
   } else if (item.type === "voice") {
-    body.innerHTML = `<audio controls src="${item.content}" style="width:100%"></audio>`;
+    body.innerHTML = `<audio controls src="${item.content}"></audio>`;
   } else {
-    body.innerHTML = `<p style="white-space:pre-wrap">${item.content}</p>`;
+    body.innerHTML = `<p>${item.content}</p>`;
   }
 
-  document.getElementById("modal").classList.remove("hidden");
+  modal.style.display = "flex";
 }
 
 function closeModal() {
-  document.getElementById("modal").classList.add("hidden");
+  document.getElementById("modal").style.display = "none";
 }
 
-loadNotes();
+async function del(id) {
+  await sb.from("scrapbook").delete().eq("id", id);
+  load();
+}
+
+load();
 </script>
 
 </body>
