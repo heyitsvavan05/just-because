@@ -24,8 +24,10 @@
       border-radius: 16px;
       box-shadow: 0 10px 25px -5px rgba(0,0,0,0.3);
       box-sizing: border-box;
+      margin-bottom: 25px;
     }
     h2 { text-align: center; color: #f59e0b; margin-top: 0; margin-bottom: 20px; }
+    h3 { color: #f59e0b; margin-top: 5px; margin-bottom: 15px; font-size: 18px; }
     label { font-size: 14px; color: #94a3b8; font-weight: 600; }
     select, textarea, button {
       width: 100%;
@@ -60,7 +62,6 @@
       box-shadow: inset 0 0 10px rgba(0,0,0,0.1);
     }
 
-    /* IG Tool Toggles (Pen vs Highlighter) */
     .brush-tools {
       display: flex;
       justify-content: center;
@@ -84,7 +85,6 @@
       color: #0f172a;
     }
 
-    /* IG-Style Scrollable Color Palette Box */
     .color-palette-wrapper {
       width: 100%;
       overflow-x: auto;
@@ -123,12 +123,63 @@
     }
     #status-msg { text-align: center; margin-top: 15px; font-size: 14px; color: #cbd5e1; font-weight: bold; }
     
-    /* WhatsApp Button Styles */
-    .whatsapp-btn {
-      background: #25D366;
-      color: white;
-      margin-top: 12px;
+    .whatsapp-btn { background: #25D366; color: white; margin-top: 12px; }
+
+    /* --- NEW MANAGEMENT CARD STYLES --- */
+    .manager-card {
+      width: 100%;
+      max-width: 400px;
+      background: #1e293b;
+      padding: 20px;
+      border-radius: 16px;
+      box-shadow: 0 10px 25px -5px rgba(0,0,0,0.3);
+      box-sizing: border-box;
     }
+    .memory-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      max-height: 400px;
+      overflow-y: auto;
+      padding-right: 4px;
+    }
+    .memory-item {
+      background: #0f172a;
+      padding: 12px;
+      border-radius: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+    }
+    .memory-preview {
+      font-size: 14px;
+      color: #cbd5e1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      max-width: 70%;
+    }
+    .memory-preview img {
+      max-height: 45px;
+      border-radius: 4px;
+      background: white;
+    }
+    .memory-preview audio {
+      max-width: 150px;
+      height: 30px;
+    }
+    .delete-btn {
+      background: #ef4444;
+      color: white;
+      font-size: 12px;
+      padding: 6px 12px;
+      width: auto;
+      margin: 0;
+      border-radius: 6px;
+    }
+    .delete-btn:active { background: #b91c1c; }
+    .no-memories { text-align: center; color: #64748b; font-size: 14px; padding: 20px 0; }
   </style>
 </head>
 <body>
@@ -186,16 +237,27 @@
   </div>
 
   <button id="submitBtn" onclick="postMemory()">Post Memory</button>
-  
   <button id="waBtn" class="whatsapp-btn" onclick="sendWhatsAppNotification()">📱 Test WhatsApp Notification</button>
   
   <p id="status-msg"></p>
+</div>
+
+<div class="manager-card">
+  <h3>Manage Saved Memories</h3>
+  <div id="memoryListContainer" class="memory-list">
+    <p class="no-memories">Loading database...</p>
+  </div>
 </div>
 
 <script>
   const SUPABASE_URL = "https://kucwhpkcpfadsdrqvxjv.supabase.co";
   const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt1Y3docGtjcGZhZHNkcnF2eGp2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4NjQ2NzAsImV4cCI6MjA5NDQ0MDY3MH0.PIUz00Qm_r6NkCKL8I4XQSSmvR02qt2VPwJQVY2s2qg";
   const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+  // Trigger engine sync right on screen mount
+  window.onload = () => {
+    loadMemoriesList();
+  };
 
   function toggleInputs() {
     const type = document.getElementById('typeSelect').value;
@@ -362,18 +424,84 @@
       document.getElementById('textContent').value = "";
       document.getElementById('audioPlayback').style.display = 'none';
       audioBase64 = "";
+      loadMemoriesList(); // Instantly update list layout
+    }
+  }
+
+  // --- NEW FEED GENERATION FUNCTIONS ---
+  async function loadMemoriesList() {
+    const container = document.getElementById('memoryListContainer');
+    
+    // Fetch directly from table sorted sequentially
+    const { data: memories, error } = await _supabase
+      .from('scrapbook')
+      .select('id, type, content, created_at')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      container.innerHTML = `<p class="no-memories" style="color:#ef4444;">Failed to sync rows: ${error.message}</p>`;
+      return;
+    }
+
+    if (!memories || memories.length === 0) {
+      container.innerHTML = `<p class="no-memories">The jar is currently empty. ✨</p>`;
+      return;
+    }
+
+    container.innerHTML = ""; // Clear loader string
+
+    memories.forEach(item => {
+      const itemRow = document.createElement('div');
+      itemRow.className = 'memory-item';
+      itemRow.id = `mem-row-${item.id}`;
+
+      let previewContent = "";
+      if (item.type === 'text') {
+        previewContent = `<span title="${item.content}">💬 ${item.content}</span>`;
+      } else if (item.type === 'doodle') {
+        previewContent = `<img src="${item.content}" alt="Doodle Thumbnail" />`;
+      } else if (item.type === 'voice' || item.type === 'audio') {
+        previewContent = `<audio src="${item.content}" controls></audio>`;
+      } else {
+        previewContent = `<span>📁 Custom Data Asset</span>`;
+      }
+
+      itemRow.innerHTML = `
+        <div class="memory-preview">${previewContent}</div>
+        <button class="delete-btn" onclick="deleteMemoryRow(${item.id})">Delete 🗑️</button>
+      `;
+      container.appendChild(itemRow);
+    });
+  }
+
+  async function deleteMemoryRow(id) {
+    if(!confirm("Are you sure you want to permanently delete this memory? It will disappear from her jar instantly.")) return;
+
+    const { error } = await _supabase
+      .from('scrapbook')
+      .delete()
+      .eq('id', id);
+
+    if (error) {
+      alert("Could not remove row: " + error.message);
+    } else {
+      // Clean UI element target smoothly
+      const element = document.getElementById(`mem-row-${id}`);
+      if(element) element.remove();
+      
+      // If everything was cleared, append simple placeholder string
+      const container = document.getElementById('memoryListContainer');
+      if (container.children.length === 0) {
+        container.innerHTML = `<p class="no-memories">The jar is currently empty. ✨</p>`;
+      }
     }
   }
 
   function sendWhatsAppNotification() {
-    // Hardcoded with your verified test format (+63 977 753 9573 formatting mapped cleanly)
     const testNumber = "639777539573"; 
-    
     const message = "Hey Bebi! I just dropped a something into your jar. Go check it! 🌌";
     const encodedMessage = encodeURIComponent(message);
-    
     const waLink = `https://api.whatsapp.com/send?phone=${testNumber}&text=${encodedMessage}`;
-    
     window.open(waLink, '_blank');
   }
 </script>
