@@ -107,9 +107,9 @@ canvas {
 
 <label>Choose Type:</label>
 <select id="typeSelect" onchange="toggleInputs()">
-  <option value="text">Text</option>
-  <option value="doodle">Doodle</option>
-  <option value="voice">Voice</option>
+  <option value="text">text</option>
+  <option value="doodle">doodle</option>
+  <option value="voice">voice</option>
 </select>
 
 <div id="text-container">
@@ -136,10 +136,12 @@ canvas {
 <div id="memoryListContainer" class="memory-list"></div>
 </div>
 
-<!-- Supabase -->
+<!-- Supabase FIXED -->
 <script>
 const SUPABASE_URL = "https://kucwhpkcpfadsdrqvxjv.supabase.co";
-const SUPABASE_KEY = "YOUR_KEY";
+
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt1Y3docGtjcGZhZHNkcnF2eGp2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4NjQ2NzAsImV4cCI6MjA5NDQ0MDY3MH0.PIUz00Qm_r6NkCKL8I4XQSSmvR02qt2VPwJQVY2s2qg";
+
 const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 </script>
 
@@ -152,6 +154,7 @@ if (typeof getEmotionalStatus === "function") {
   document.getElementById("admin-status").innerText = getEmotionalStatus();
 }
 
+/* UI toggle */
 function toggleInputs() {
   const type = document.getElementById('typeSelect').value;
 
@@ -162,57 +165,116 @@ function toggleInputs() {
   if (type === 'doodle') initCanvas();
 }
 
-/* Canvas */
+/* CANVAS */
 const canvas = document.getElementById("doodleCanvas");
 const ctx = canvas.getContext("2d");
 let drawing = false;
 
 function initCanvas() {
   canvas.onmousedown = e => { drawing = true; ctx.beginPath(); draw(e); };
-  canvas.onmouseup = () => { drawing = false; };
+  canvas.onmouseup = () => { drawing = false; ctx.beginPath(); };
   canvas.onmousemove = draw;
 }
 
 function draw(e) {
   if (!drawing) return;
   const rect = canvas.getBoundingClientRect();
-  ctx.lineTo(e.clientX - rect.left, e.clientY - rect.top);
+  const x = e.clientX - rect.left;
+  const y = e.clientY - rect.top;
+
+  ctx.lineTo(x, y);
   ctx.stroke();
   ctx.beginPath();
-  ctx.moveTo(e.clientX - rect.left, e.clientY - rect.top);
+  ctx.moveTo(x, y);
 }
 
 function clearCanvas() {
   ctx.clearRect(0,0,canvas.width,canvas.height);
 }
 
-/* voice */
+/* VOICE (placeholder ready) */
 let audioBase64 = "";
 
+/* POST MEMORY */
 async function postMemory() {
   const type = document.getElementById("typeSelect").value;
+
   let content = "";
 
-  if (type === "text") content = document.getElementById("textContent").value;
-  else if (type === "doodle") content = canvas.toDataURL();
-  else if (type === "voice") content = audioBase64;
+  if (type === "text") {
+    content = document.getElementById("textContent").value.trim();
+  } 
+  else if (type === "doodle") {
+    content = canvas.toDataURL("image/png");
+  } 
+  else if (type === "voice") {
+    content = audioBase64;
+  }
 
   if (!content) {
     document.getElementById("status-msg").innerText = "Empty!";
     return;
   }
 
-  const { error } = await _supabase.from("scrapbook").insert([{ type, content }]);
+  const { error } = await _supabase
+    .from("scrapbook")
+    .insert([{ type, content }]);
 
-  if (!error) {
-    document.getElementById("status-msg").innerText = "Saved ✔";
-
-    emailjs.send("service_m0nwde2", "template_pl7h7e9", { name: "Bebi" });
-
-    loadMemoriesList();
+  if (error) {
+    document.getElementById("status-msg").innerText = error.message;
+    return;
   }
+
+  document.getElementById("status-msg").innerText = "Saved ✔";
+
+  emailjs.send("service_m0nwde2", "template_pl7h7e9", { name: "Bebi" });
+
+  loadMemoriesList();
 }
 
-/* load list */
+/* LOAD LIST */
 async function loadMemoriesList() {
-  const container = document.getElementById("memoryList
+  const container = document.getElementById("memoryListContainer");
+
+  const { data, error } = await _supabase
+    .from("scrapbook")
+    .select("*")
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    container.innerHTML = "<p style='color:red;'>Failed to load</p>";
+    return;
+  }
+
+  if (!data || data.length === 0) {
+    container.innerHTML = "<p style='color:#94a3b8;'>No memories yet</p>";
+    return;
+  }
+
+  container.innerHTML = "";
+
+  data.forEach(item => {
+    const div = document.createElement("div");
+    div.className = "memory-item";
+
+    div.innerHTML = `
+      <span>${item.type}</span>
+      <button class="delete-btn" onclick="deleteMemory('${item.id}')">Delete</button>
+    `;
+
+    container.appendChild(div);
+  });
+}
+
+/* DELETE */
+async function deleteMemory(id) {
+  await _supabase.from("scrapbook").delete().eq("id", id);
+  loadMemoriesList();
+}
+
+loadMemoriesList();
+
+</script>
+
+</body>
+</html>
