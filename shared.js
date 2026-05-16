@@ -1,139 +1,70 @@
 // =============================
-// SHARED EMOTIONAL SYSTEM CORE (FINAL)
+// SHARED EMOTIONAL SYSTEM CORE (ALIVE MODE v2)
 // =============================
 
-// Time helper (future-proof)
 function getTimeData() {
   const now = new Date();
 
-  return {
-    phHour: parseInt(
-      now.toLocaleString("en-US", {
-        timeZone: "Asia/Manila",
-        hour: "numeric",
-        hour12: false
-      })
-    ),
-    inHour: parseInt(
-      now.toLocaleString("en-US", {
-        timeZone: "Asia/Kolkata",
-        hour: "numeric",
-        hour12: false
-      })
-    ),
-    localHour: now.getHours()
-  };
+  const phHour = parseInt(now.toLocaleString("en-US", {
+    timeZone: "Asia/Manila",
+    hour: "numeric",
+    hour12: false
+  }));
+
+  return { phHour };
 }
 
-
-// =============================
-// MAIN STATUS (INDEX / GENERAL)
-// =============================
+// EXISTING STATUS (kept stable)
 function getEmotionalStatus() {
   const hour = new Date().getHours();
 
   if (hour >= 20 || hour < 5) {
     return "🌙 He's working right now... but you're still on his mind.";
   }
-
   if (hour >= 5 && hour < 12) {
     return "😴 He just finished work. Probably sleeping now.";
   }
-
   if (hour >= 12 && hour < 18) {
     return "🟢 He's awake. You can open anything here.";
   }
-
   return "🌤️ Evening is coming... he might start work soon.";
 }
 
-
-// =============================
-// INBOX STATUS (SOFTER TONE)
-// =============================
-function getInboxStatus() {
-  const hour = new Date().getHours();
-
-  if (hour >= 20 || hour < 5) {
-    return "💌 He's busy right now, but still leaving you something here.";
-  }
-
-  return getEmotionalStatus();
-}
-
-
-// =============================
-// 🌙 ALIVE MODE (NEW FINAL LAYER)
-// =============================
+// NEW: ALIVE MODE (your request)
 function getAliveMood() {
-  const hour = new Date().getHours();
+  const h = new Date().getHours();
 
-  if (hour >= 1 && hour <= 5) {
+  if (h >= 1 && h <= 5) {
     return "She’s probably asleep… but your message is still waiting 🌙";
   }
-
-  if (hour >= 6 && hour <= 11) {
+  if (h >= 6 && h <= 11) {
     return "Morning — if she opens this, she might smile ☀️";
   }
-
-  if (hour >= 12 && hour <= 17) {
+  if (h >= 12 && h <= 17) {
     return "Afternoon silence… but memories are active 💭";
   }
-
-  if (hour >= 18 && hour <= 23) {
+  if (h >= 18 && h <= 23) {
     return "Night again… this is when missing hits hardest 🌌";
   }
 
   return "Somewhere between thoughts and memories…";
 }
 
-
-// =============================
-// RANDOM MESSAGE SYSTEM
-// =============================
-function getRandomMessage(type = "soft") {
-  const messages = {
-    soft: [
-      "I'm still here with you.",
-      "You’re not alone right now.",
-      "I’m just a little busy, baby.",
-      "Thinking of you quietly.",
-      "Come here…"
-    ],
-    anxious: [
-      "Hey… breathe. I’m still here.",
-      "Don’t overthink it, okay?",
-      "We’re okay. I promise.",
-      "I’m just working, not gone.",
-      "You can relax, baby."
-    ]
-  };
-
-  const list = messages[type] || messages.soft;
-  return list[Math.floor(Math.random() * list.length)];
+// inbox version
+function getInboxStatus() {
+  return getEmotionalStatus();
 }
 
-
-// =============================
-// THEME ENGINE (AUTO MOOD SHIFT)
-// =============================
+// theme mood
 function applyThemeMood() {
   const hour = new Date().getHours();
   const root = document.documentElement;
 
   if (hour >= 20 || hour < 5) {
     root.style.setProperty("--accent-yellow", "#fbbf24");
-    root.style.setProperty("--text-dim", "#94a3b8");
-    root.style.setProperty("--bg-mood", "#0b1220");
   } else {
     root.style.setProperty("--accent-yellow", "#fde047");
-    root.style.setProperty("--text-dim", "#a3b1c6");
-    root.style.setProperty("--bg-mood", "#0f172a");
   }
 }
 
-
-// =============================
-// AUTO RUN
-// =============================
 applyThemeMood();
