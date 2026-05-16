@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Inbox</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Memory Jar</title>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
@@ -11,109 +11,51 @@
 body {
   margin: 0;
   background: #0f172a;
-  color: white;
-  font-family: sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
-.container { max-width: 420px; margin: auto; }
+.wrapper {
+  max-width: 420px;
+  margin: auto;
+  padding: 30px 20px;
+  color: white;
+  text-align: center;
+}
 
 .card {
-  display: flex;
-  justify-content: space-between;
-  padding: 14px;
-  border-bottom: 1px solid #2d3748;
-}
-
-.delete {
-  background: #ef4444;
-  border: none;
+  background: #1e293b;
+  padding: 18px;
+  margin: 12px 0;
+  border-radius: 14px;
+  text-decoration: none;
   color: white;
-  padding: 6px 10px;
-}
-.modal {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.7);
-  display: none;
-  justify-content: center;
+  display: flex;
+  gap: 12px;
   align-items: center;
-}
-.modal-inner {
-  background: white;
-  color: black;
-  padding: 20px;
-  border-radius: 10px;
 }
 </style>
 </head>
 
 <body>
 
-<div class="container">
-  <h3 id="title"></h3>
-  <div id="list"></div>
+<div class="wrapper">
+
+  <h2>Bebi’s Memory Jar 🍯</h2>
+  <p id="home-status"></p>
+
+  <a class="card" href="inbox.html?view=text">💬 Messages</a>
+  <a class="card" href="inbox.html?view=voice">🎤 Voice Notes</a>
+  <a class="card" href="inbox.html?view=doodle">🎨 Doodles</a>
+
 </div>
 
-<div class="modal" id="modal" onclick="closeModal()">
-  <div class="modal-inner" onclick="event.stopPropagation()">
-    <div id="modal-body"></div>
-    <button onclick="closeModal()">Close</button>
-  </div>
-</div>
+<script src="shared.js"></script>
 
 <script>
-const SUPABASE_URL = "https://kucwhpkcpfadsdrqvxjv.supabase.co";
-const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt1Y3docGtjcGZhZHNkcnF2eGp2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4NjQ2NzAsImV4cCI6MjA5NDQ0MDY3MH0.PIUz00Qm_r6NkCKL8I4XQSSmvR02qt2VPwJQVY2s2qg";
-const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
-const type = new URLSearchParams(location.search).get("view") || "text";
-document.getElementById("title").innerText = type.toUpperCase();
-
-async function load() {
-  const { data } = await sb.from("scrapbook").select("*").eq("type", type);
-
-  const list = document.getElementById("list");
-  list.innerHTML = "";
-
-  data.forEach(item => {
-    const div = document.createElement("div");
-    div.className = "card";
-
-    div.innerHTML = `
-      <span>${item.type}</span>
-      <button class="delete" onclick="del('${item.id}')">Delete</button>
-    `;
-
-    div.onclick = () => open(item);
-    list.appendChild(div);
-  });
-}
-
-function open(item) {
-  const modal = document.getElementById("modal");
-  const body = document.getElementById("modal-body");
-
-  if (item.type === "doodle") {
-    body.innerHTML = `<img src="${item.content}" style="max-width:100%">`;
-  } else if (item.type === "voice") {
-    body.innerHTML = `<audio controls src="${item.content}"></audio>`;
-  } else {
-    body.innerHTML = `<p>${item.content}</p>`;
-  }
-
-  modal.style.display = "flex";
-}
-
-function closeModal() {
-  document.getElementById("modal").style.display = "none";
-}
-
-async function del(id) {
-  await sb.from("scrapbook").delete().eq("id", id);
-  load();
-}
-
-load();
+document.getElementById("home-status").innerText = getAliveMood();
+setInterval(() => {
+  document.getElementById("home-status").innerText = getAliveMood();
+}, 60000);
 </script>
 
 </body>
