@@ -4,47 +4,32 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Bebi's Memory Jar</title>
+  
   <link rel="stylesheet" href="style.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   
   <style>
-    /* Scoped layout rules strictly for the WhatsApp modal interaction */
+    /* I put the WhatsApp popup styling down here so it NEVER touches your style.css */
     .modal-overlay {
-      position: fixed;
-      top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(15, 23, 42, 0.85);
-      backdrop-filter: blur(8px);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      opacity: 0; pointer-events: none;
-      transition: opacity 0.3s ease;
-      z-index: 999;
-      padding: 20px;
-      box-sizing: border-box;
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(8px);
+      display: flex; align-items: center; justify-content: center;
+      opacity: 0; pointer-events: none; transition: opacity 0.3s ease; z-index: 999; padding: 20px; box-sizing: border-box;
     }
     .modal-overlay.open { opacity: 1; pointer-events: auto; }
     .modal-box {
-      background: #1e293b;
-      padding: 24px;
-      border-radius: 16px;
-      max-width: 340px;
-      width: 100%;
-      text-align: center;
-      box-shadow: 0 20px 25px -5px rgba(0,0,0,0.5);
-      border: 1px solid rgba(245, 158, 11, 0.2);
+      background: #1e293b; padding: 24px; border-radius: 16px; width: 100%; max-width: 340px;
+      text-align: center; border: 1px solid rgba(245, 158, 11, 0.2);
     }
     .modal-box h4 { margin: 0 0 10px 0; color: #f59e0b; font-size: 18px; }
-    .modal-box p { margin: 0 0 20px 0; color: #94a3b8; font-size: 13px; line-height: 1.4; color: #f8fafc; }
+    .modal-box p { margin: 0 0 20px 0; font-size: 13px; color: #f8fafc; }
     .modal-input {
       width: 100%; padding: 12px; background: #0f172a; border: 1px solid #334155;
-      border-radius: 8px; color: white; font-size: 16px; text-align: center;
-      margin-bottom: 15px; box-sizing: border-box;
+      border-radius: 8px; color: white; margin-bottom: 15px; box-sizing: border-box;
     }
-    .modal-input:focus { border-color: #f59e0b; outline: none; }
     .modal-actions { display: flex; gap: 10px; }
-    .modal-btn { flex: 1; padding: 12px; border-radius: 8px; font-weight: bold; font-size: 14px; cursor: pointer; border: none; }
-    .btn-cancel { background: #334155; color: #94a3b8; }
+    .modal-btn { flex: 1; padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer; border: none; }
+    .btn-cancel { background: #334155; color: white; }
     .btn-confirm { background: #25D366; color: white; }
   </style>
 </head>
@@ -52,50 +37,43 @@
 
   <h1>Bebi's Memory Jar 🍯</h1>
   <p class="subtitle">Open a folder to see what I left for you...</p>
-    
+
   <div class="folder-grid">
-    <a href="inbox.html" class="folder-wrapper messages">
-      <div class="folder-shape">💬</div>
+    <a href="inbox.html?view=text" class="folder-card messages">
+      <div class="folder-icon">💬</div>
       <div class="folder-label">Messages</div>
     </a>
     
-    <a href="inbox.html" class="folder-wrapper voice">
-      <div class="folder-shape">🎤</div>
+    <a href="inbox.html?view=voice" class="folder-card voice">
+      <div class="folder-icon">🎤</div>
       <div class="folder-label">Voice Notes</div>
     </a>
     
-    <a href="inbox.html" class="folder-wrapper doodles">
-      <div class="folder-shape">🎨</div>
+    <a href="inbox.html?view=doodle" class="folder-card doodles">
+      <div class="folder-icon">🎨</div>
       <div class="folder-label">Doodles</div>
     </a>
   </div>
 
-  <div class="notification-footer" style="margin: 60px auto 20px auto; padding: 20px; max-width: 340px; text-align: center; border-top: 1px solid rgba(245, 158, 11, 0.2); box-sizing: border-box; width: 100%;">
-    <p style="margin: 0 0 14px 0; font-size: 13px; color: #94a3b8; font-style: italic; line-height: 1.5;">
-      Want to know the exact second I'm thinking of you? Tap below to get a WhatsApp ping whenever I drop a new memory into your jar. 🌌✨
-    </p>
-    <button onclick="openNotificationModal()" style="background: #25D366; color: white; border: none; padding: 10px 20px; border-radius: 20px; font-weight: bold; font-size: 13px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 4px 14px rgba(37, 211, 102, 0.3); transition: transform 0.2s;">
-      📱 Turn on Notifications
+  <div class="notification-footer" style="margin-top: 50px; text-align: center; width: 100%;">
+    <button onclick="openNotificationModal()" style="background: transparent; color: #94a3b8; border: none; font-size: 12px; cursor: pointer; text-decoration: underline; font-style: italic;">
+      📱 Setup System Alerts
     </button>
   </div>
 
   <div id="notificationModal" class="modal-overlay">
     <div class="modal-box">
-      <h4>Link Your WhatsApp</h4>
-      <p style="margin-bottom: 12px;"><strong>Step 1:</strong> Tap below to get your secure activation key from the notification bot.</p>
-      
-      <button onclick="getCallMeBotKey()" style="background: #334155; color: #f59e0b; border: 1px solid #f59e0b; padding: 10px; border-radius: 8px; width: 100%; font-weight: bold; margin-bottom: 20px; cursor: pointer; font-size: 14px;">
-        📩 Request My Secret Key
+      <h4>Link WhatsApp Pings</h4>
+      <p><strong>Step 1:</strong> Tap below to get your API key.</p>
+      <button onclick="getCallMeBotKey()" style="background: #334155; color: #f59e0b; border: 1px solid #f59e0b; padding: 10px; border-radius: 8px; width: 100%; font-weight: bold; margin-bottom: 20px; cursor: pointer;">
+        Get Activation Key
       </button>
-
-      <p style="margin-bottom: 12px;"><strong>Step 2:</strong> Paste your details below to activate:</p>
-      
-      <input type="tel" id="waNumberInput" class="modal-input" placeholder="WhatsApp Number (e.g. 63977539573)">
-      <input type="text" id="waApiKeyInput" class="modal-input" placeholder="Secret API Key (e.g. 123456)">
-      
+      <p><strong>Step 2:</strong> Enter details below to sync:</p>
+      <input type="tel" id="waNumberInput" class="modal-input" placeholder="Number (e.g. 63977539573)">
+      <input type="text" id="waApiKeyInput" class="modal-input" placeholder="API Key">
       <div class="modal-actions">
         <button class="modal-btn btn-cancel" onclick="closeNotificationModal()">Cancel</button>
-        <button class="modal-btn btn-confirm" onclick="saveNotificationData()">Activate Pings ✨</button>
+        <button class="modal-btn btn-confirm" onclick="saveNotificationData()">Save Link</button>
       </div>
     </div>
   </div>
@@ -105,41 +83,23 @@
     const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt1Y3docGtjcGZhZHNkcnF2eGp2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4NjQ2NzAsImV4cCI6MjA5NDQ0MDY3MH0.PIUz00Qm_r6NkCKL8I4XQSSmvR02qt2VPwJQVY2s2qg";
     const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    function openNotificationModal() {
-      document.getElementById('notificationModal').classList.add('open');
-    }
+    function openNotificationModal() { document.getElementById('notificationModal').classList.add('open'); }
+    function closeNotificationModal() { document.getElementById('notificationModal').classList.remove('open'); }
+    
+    function getCallMeBotKey() { window.open(`https://api.whatsapp.com/send?phone=34644975353&text=${encodeURIComponent("I allow callmebot to send me messages")}`, '_blank'); }
 
-    function closeNotificationModal() {
-      document.getElementById('notificationModal').classList.remove('open');
-    }
-
-    // CallMeBot Access Key Tunnel
-    function getCallMeBotKey() {
-      const botNumber = "34644975353"; 
-      const prefilledText = encodeURIComponent("I allow callmebot to send me messages");
-      window.open(`https://api.whatsapp.com/send?phone=${botNumber}&text=${prefilledText}`, '_blank');
-    }
-
-    // Database Sync Config Table Writers
     async function saveNotificationData() {
       const rawNumber = document.getElementById('waNumberInput').value.trim();
       const apiKey = document.getElementById('waApiKeyInput').value.trim();
       const cleanNumber = rawNumber.replace(/[^0-9]/g, '');
 
-      if (!cleanNumber || !apiKey) {
-        alert("⚠️ Please enter both your phone number and your secret API key!");
-        return;
-      }
+      if (!cleanNumber || !apiKey) { alert("Please fill in both fields!"); return; }
 
       const updateNum = await _supabase.from('config_settings').update({ value: cleanNumber }).eq('key_name', 'wa_number');
       const updateKey = await _supabase.from('config_settings').update({ value: apiKey }).eq('key_name', 'wa_api_key');
 
-      if (updateNum.error || updateKey.error) {
-        alert("❌ Configuration failed: " + (updateNum.error?.message || updateKey.error?.message));
-      } else {
-        alert("🎉 Notifications Linked Successfully! You can now overwrite this at any time. 🥰");
-        closeNotificationModal();
-      }
+      if (updateNum.error || updateKey.error) { alert("Failed to sync keys."); } 
+      else { alert("Linked! Saved configuration live."); closeNotificationModal(); }
     }
   </script>
 </body>
