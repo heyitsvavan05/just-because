@@ -434,23 +434,16 @@
     }
   }
 
-  /* HIGH-PRIORITY EMAIL ALERTS FOR PREBUILT EMAILJS WELCOME TEMPLATE */
+  /* HIGH-PRIORITY EMAIL ALERTS - CLEAN HANDSHAKE */
   async function triggerAutomatedNotification() {
     console.log("Initiating server email handshake...");
 
+    // Passes name context, while your dashboard safely dictates the exact target inbox
     const templateParams = {
-      to_name: "Bebi"
+      name: "Bebi"
     };
 
-    const emailOptions = {
-      headers: {
-        'X-Priority': '1',                
-        'X-MSMail-Priority': 'High',      
-        'Importance': 'high'              
-      }
-    };
-
-    emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, templateParams, emailOptions)
+    emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, templateParams)
       .then((response) => {
          console.log("System alert delivered successfully!", response.status, response.text);
       }, (err) => {
