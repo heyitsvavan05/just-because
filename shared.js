@@ -10,7 +10,7 @@ const BebiEngine = (function() {
     // Force calculate exact hours regardless of device location
     const phTime = new Date(now.toLocaleString("en-US", { timeZone: "Asia/Manila" }));
     const inTime = new Date(now.toLocaleString("en-US", { timeZone: "Asia/Kolkata" }));
-    
+
     return {
       phHour: phTime.getHours(),
       inHour: inTime.getHours()
@@ -109,6 +109,12 @@ const BebiEngine = (function() {
       // Safely update elements if they exist on the current page
       const statusEl = document.getElementById("home-status");
       if (statusEl) statusEl.innerText = getEmotionalStatus();
+
+      // INJECTS HOME SCREEN WHISPER NOTE
+      const whisperEl = document.getElementById("whisper-message");
+      if (whisperEl && !whisperEl.innerText) { 
+        whisperEl.innerText = `✨ "${getRandomMessage('soft')}"`;
+      }
 
       const aliveEl = document.getElementById("alive-mood");
       if (aliveEl) aliveEl.innerText = getAliveMood();
