@@ -10,7 +10,9 @@
 <style>
 body {
   margin: 0;
-  background: #0f172a;
+  /* UPDATED: Links directly to the dynamic background engine */
+  background: var(--bg-mood, #0f172a);
+  transition: background 1.5s ease-in-out;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   display: flex;
   justify-content: center;
@@ -35,7 +37,7 @@ body {
   align-items: center;
   color: white;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-  transition: transform 0.1s, box-shadow 0.1s;
+  transition: transform 0.1s, box-shadow 0.1s, background 1.5s ease-in-out;
 }
 
 /* Subtle mobile press feedback */
@@ -58,7 +60,8 @@ body {
 
 #home-status {
   font-size: 13px;
-  color: #94a3b8;
+  /* UPDATED: Dynamically changes text color based on your system variables */
+  color: var(--text-dim, #94a3b8);
   margin-top: 6px;
   font-style: italic;
 }
@@ -70,8 +73,8 @@ body {
 <div class="wrapper">
 
   <div class="card" style="flex-direction:column; align-items:flex-start; cursor: default;">
-    <h2 style="color:#fde047; margin:0; font-size: 24px;">Bebi's Memory Jar 🍯</h2>
-    <p style="margin:4px 0 0 0; color:#94a3b8; font-size: 14px;">Open a folder to see memories</p>
+    <h2 style="color: var(--accent-yellow, #fde047); margin:0; font-size: 24px;">Bebi's Memory Jar 🍯</h2>
+    <p style="margin:4px 0 0 0; color: var(--text-dim, #94a3b8); font-size: 14px;">Open a folder to see memories</p>
     <p id="home-status">Syncing global heartbeat...</p>
     
     <p id="whisper-message" style="margin: 10px 0 0 0; color: #f59e0b; font-size: 13px; font-style: italic; border-top: 1px solid #334155; padding-top: 8px; width: 100%;"></p>
@@ -81,7 +84,7 @@ body {
     <div class="icon">💬</div>
     <div>
       <div style="font-weight: bold; font-size: 16px;">Messages</div>
-      <div style="font-size: 12px; color: #94a3b8; margin-top: 2px;">Just because notes</div>
+      <div style="font-size: 12px; color: var(--text-dim, #94a3b8); margin-top: 2px;">Just because notes</div>
     </div>
   </a>
 
@@ -89,7 +92,7 @@ body {
     <div class="icon">🎤</div>
     <div>
       <div style="font-weight: bold; font-size: 16px;">Voice Notes</div>
-      <div style="font-size: 12px; color: #94a3b8; margin-top: 2px;">Audio recordings</div>
+      <div style="font-size: 12px; color: var(--text-dim, #94a3b8); margin-top: 2px;">Audio recordings</div>
     </div>
   </a>
 
@@ -97,7 +100,7 @@ body {
     <div class="icon">🎨</div>
     <div>
       <div style="font-weight: bold; font-size: 16px;">Doodles</div>
-      <div style="font-size: 12px; color: #94a3b8; margin-top: 2px;">Hand-drawn pictures</div>
+      <div style="font-size: 12px; color: var(--text-dim, #94a3b8); margin-top: 2px;">Hand-drawn pictures</div>
     </div>
   </a>
 
