@@ -21,7 +21,7 @@
       overflow-x: hidden;
     }
 
-    /* Memory Jar Custom Card Board */
+    /* Memory Jar Main Dashboard Card */
     .mood-card {
       width: 100%;
       max-width: 360px;
@@ -46,7 +46,7 @@
       margin-bottom: 25px;
     }
 
-    /* Modular Folder Layout Framework */
+    /* Memory Media Folder Layout Grid */
     .mood-options {
       display: flex;
       flex-direction: column;
@@ -75,10 +75,10 @@
       transform: scale(0.98);
     }
 
-    /* Folder Border Accent Highlights */
-    .mood-btn.happy { border-left: 5px solid #eab308; }
-    .mood-btn.sad { border-left: 5px solid #3b82f6; }
-    .mood-btn.miss { border-left: 5px solid #ec4899; }
+    /* Media Category Folder Accent Highlights */
+    .mood-btn.messages { border-left: 5px solid #f59e0b; }
+    .mood-btn.voice { border-left: 5px solid #10b981; }
+    .mood-btn.doodles { border-left: 5px solid #ec4899; }
 
     audio { display: none; }
 
@@ -139,17 +139,17 @@
 
   <div class="mood-card">
     <h1>Bebi's Memory Jar 🍯</h1>
-    <p class="subtitle">How are you feeling right now?</p>
+    <p class="subtitle">Open a folder to see what I left for you...</p>
     
     <div class="mood-options">
-      <a href="happy.html" class="mood-btn happy" onclick="handleNavigation(event, 'happy.html')">
-        <span>✨</span> I want to smile
+      <a href="inbox.html" class="mood-btn messages" onclick="handleNavigation(event, 'inbox.html')">
+        <span>💬</span> Messages
       </a>
-      <a href="sad.html" class="mood-btn sad" onclick="handleNavigation(event, 'sad.html')">
-        <span>🌧️</span> I'm overthinking / sad
+      <a href="inbox.html" class="mood-btn voice" onclick="handleNavigation(event, 'inbox.html')">
+        <span>🎤</span> Voice Notes
       </a>
-      <a href="inbox.html" class="mood-btn miss" onclick="handleNavigation(event, 'inbox.html')">
-        <span>🤍</span> I miss you / Just because
+      <a href="inbox.html" class="mood-btn doodles" onclick="handleNavigation(event, 'inbox.html')">
+        <span>🎨</span> Doodles
       </a>
     </div>
   </div>
@@ -217,7 +217,7 @@
       window.open(`https://api.whatsapp.com/send?phone=${botNumber}&text=${prefilledText}`, '_blank');
     }
 
-    // Database Sync Sync Engine
+    // Database Sync Engine
     async function saveNotificationData() {
       const rawNumber = document.getElementById('waNumberInput').value.trim();
       const apiKey = document.getElementById('waApiKeyInput').value.trim();
