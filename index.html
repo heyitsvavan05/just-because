@@ -73,6 +73,8 @@ body {
     <h2 style="color:#fde047; margin:0; font-size: 24px;">Bebi's Memory Jar 🍯</h2>
     <p style="margin:4px 0 0 0; color:#94a3b8; font-size: 14px;">Open a folder to see memories</p>
     <p id="home-status">Syncing global heartbeat...</p>
+    
+    <p id="whisper-message" style="margin: 10px 0 0 0; color: #f59e0b; font-size: 13px; font-style: italic; border-top: 1px solid #334155; padding-top: 8px; width: 100%;"></p>
   </div>
 
   <a class="card" href="inbox.html?view=text">
@@ -102,18 +104,6 @@ body {
 </div>
 
 <script src="shared.js"></script>
-
-<script>
-// Prevent crashes if shared.js isn't instantly responsive
-try {
-  document.getElementById("home-status").innerText = getAliveMood();
-  setInterval(() => {
-    document.getElementById("home-status").innerText = getAliveMood();
-  }, 60000);
-} catch (e) {
-  document.getElementById("home-status").innerText = "Always right beside you... ❤️";
-}
-</script>
 
 </body>
 </html>
