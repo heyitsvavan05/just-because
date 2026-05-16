@@ -4,69 +4,116 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Inbox</title>
-
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
 <style>
 body {
   margin: 0;
   background: #0f172a;
   color: white;
-  font-family: sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  padding: 20px 10px;
 }
-
 .container {
   max-width: 420px;
   margin: auto;
 }
-
+h3 {
+  color: #f59e0b;
+  margin-top: 0;
+  border-bottom: 2px solid #1e293b;
+  padding-bottom: 8px;
+  text-transform: capitalize;
+}
 .card {
   display: flex;
+  align-items: center;
   padding: 16px;
-  border-bottom: 1px solid #2d3748;
+  background: #1e293b;
+  border-radius: 12px;
+  margin-bottom: 12px;
   cursor: pointer;
+  box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
 }
-
 .icon {
-  width: 40px;
-  height: 40px;
-  background: #1f2937;
+  width: 44px;
+  height: 44px;
+  background: #0f172a;
   display: flex;
   justify-content: center;
   align-items: center;
   border-radius: 50%;
-  margin-right: 12px;
+  margin-right: 14px;
+  font-size: 20px;
+  flex-shrink: 0;
 }
-
+.preview-box {
+  font-size: 15px;
+  color: #cbd5e1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  width: 100%;
+}
+.preview-box img {
+  max-height: 50px;
+  border-radius: 6px;
+  background: white;
+}
+.preview-box audio {
+  max-width: 180px;
+  height: 28px;
+}
 .modal {
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,0.7);
+  background: rgba(15, 23, 42, 0.85);
   display: none;
   justify-content: center;
   align-items: center;
-}
-
-.modal-content {
-  background: white;
-  color: black;
   padding: 20px;
-  border-radius: 12px;
+  z-index: 100;
 }
+.modal-content {
+  background: #1e293b;
+  color: #f8fafc;
+  padding: 24px;
+  border-radius: 16px;
+  width: 100%;
+  max-width: 360px;
+  box-shadow: 0 20px 25px -5px rgba(0,0,0,0.5);
+  box-sizing: border-box;
+  text-align: center;
+}
+#modal-body {
+  margin-bottom: 20px;
+  font-size: 16px;
+  line-height: 1.5;
+  color: #e2e8f0;
+}
+.modal-content button {
+  background: #f59e0b;
+  color: #0f172a;
+  font-weight: bold;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  cursor: pointer;
+  width: 100%;
+}
+.no-items { text-align: center; color: #64748b; margin-top: 40px; }
 </style>
 </head>
-
 <body>
 
 <div class="container">
-  <h3 id="title" style="padding:10px;"></h3>
-  <div id="list"></div>
+  <h3 id="title">Memories Folder</h3>
+  <div id="list">Loading jar content...</div>
 </div>
 
 <div class="modal" id="modal" onclick="closeModal()">
   <div class="modal-content" onclick="event.stopPropagation()">
     <div id="modal-body"></div>
-    <button onclick="closeModal()">Close</button>
+    <button onclick="closeModal()">Close Memory</button>
   </div>
 </div>
 
@@ -76,38 +123,57 @@ const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZ
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const type = new URLSearchParams(location.search).get("view") || "text";
-document.getElementById("title").innerText = type.toUpperCase();
+document.getElementById("title").innerText = type === "text" ? "💬 Just Because Messages" : type === "doodle" ? "🎨 Hand-drawn Doodles" : "🎤 Voice Notes";
 
 async function load() {
-  const { data } = await sb.from("scrapbook")
+  const { data, error } = await sb.from("scrapbook")
     .select("*")
     .eq("type", type)
-    .order("created_at", { ascending:false });
+    .order("created_at", { ascending: false });
 
   const list = document.getElementById("list");
   list.innerHTML = "";
 
-  data?.forEach(item => {
+  if(error || !data || data.length === 0) {
+    list.innerHTML = `<p class="no-items">This part of the jar is empty right now. ✨</p>`;
+    return;
+  }
+
+  data.forEach(item => {
     const div = document.createElement("div");
     div.className = "card";
 
+    let folderIcon = "💌";
+    let previewElement = "";
+
+    if (item.type === "text") {
+      folderIcon = "💬";
+      previewElement = `<span>${item.content.slice(0, 40)}${item.content.length > 40 ? '...' : ''}</span>`;
+    } else if (item.type === "doodle") {
+      folderIcon = "🎨";
+      previewElement = `<img src="${item.content}" alt="Doodle Preview"/>`;
+    } else if (item.type === "voice") {
+      folderIcon = "🎤";
+      previewElement = `<audio src="${item.content}" controls></audio>`;
+    }
+
     div.innerHTML = `
-      <div class="icon">💌</div>
-      <div>${(item.content || "").slice(0, 40)}</div>
+      <div class="icon">${folderIcon}</div>
+      <div class="preview-box">${previewElement}</div>
     `;
 
-    div.onclick = () => open(item);
+    div.onclick = () => openMemory(item);
     list.appendChild(div);
   });
 }
 
-function open(item) {
+function openMemory(item) {
   const body = document.getElementById("modal-body");
 
   if (item.type === "doodle") {
-    body.innerHTML = `<img src="${item.content}" style="max-width:100%">`;
+    body.innerHTML = `<img src="${item.content}" style="max-width:100%; border-radius:8px; background:white;">`;
   } else if (item.type === "voice") {
-    body.innerHTML = `<audio controls src="${item.content}" style="width:100%"></audio>`;
+    body.innerHTML = `<p style="margin-bottom:10px; font-size:14px; color:#94a3b8;">Voice Note Payload Recieved:</p><audio controls src="${item.content}" style="width:100%"></audio>`;
   } else {
     body.innerText = item.content;
   }
@@ -121,6 +187,5 @@ function closeModal() {
 
 load();
 </script>
-
 </body>
 </html>
