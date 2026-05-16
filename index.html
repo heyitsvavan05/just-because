@@ -3,33 +3,43 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Memory Jar</title>
+<title>Bebi's Memory Jar</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
 body {
-  margin:0;
-  background:#0f172a;
-  font-family:sans-serif;
-  color:white;
+  margin: 0;
+  background: #0f172a;
+  font-family: sans-serif;
+  display: flex;
+  justify-content: center;
+  color: white;
 }
 
 .wrapper {
-  max-width:400px;
-  margin:auto;
-  padding:30px;
-  text-align:center;
+  width: 100%;
+  max-width: 420px;
+  padding: 20px;
 }
 
 .card {
-  background:#1e293b;
-  padding:18px;
-  margin:12px 0;
-  border-radius:14px;
-  text-decoration:none;
-  display:flex;
-  gap:12px;
-  align-items:center;
-  color:white;
+  background: #1e293b;
+  padding: 20px;
+  border-radius: 16px;
+  margin-bottom: 16px;
+  text-decoration: none;
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  color: white;
+}
+
+.icon { font-size: 28px; }
+
+#home-status {
+  font-size: 13px;
+  color: #94a3b8;
 }
 </style>
 </head>
@@ -38,18 +48,33 @@ body {
 
 <div class="wrapper">
 
-<h1>🍯 Memory Jar</h1>
-<p id="home-status"></p>
+  <div class="card" style="flex-direction:column; align-items:flex-start;">
+    <h2 style="color:#fde047;margin:0;">Bebi's Memory Jar 🍯</h2>
+    <p style="margin:4px 0;color:#94a3b8;">Open a folder to see memories</p>
+    <p id="home-status"></p>
+  </div>
 
-<a class="card" href="inbox.html?view=text">💬 Messages</a>
-<a class="card" href="inbox.html?view=voice">🎤 Voice Notes</a>
-<a class="card" href="inbox.html?view=doodle">🎨 Doodles</a>
+  <a class="card" href="inbox.html?view=text">
+    <div class="icon">💬</div><div>Messages</div>
+  </a>
+
+  <a class="card" href="inbox.html?view=voice">
+    <div class="icon">🎤</div><div>Voice Notes</div>
+  </a>
+
+  <a class="card" href="inbox.html?view=doodle">
+    <div class="icon">🎨</div><div>Doodles</div>
+  </a>
 
 </div>
 
 <script src="shared.js"></script>
+
 <script>
 document.getElementById("home-status").innerText = getAliveMood();
+setInterval(() => {
+  document.getElementById("home-status").innerText = getAliveMood();
+}, 60000);
 </script>
 
 </body>
