@@ -132,7 +132,9 @@ body {
 <script>
   const supabaseUrl = "https://kucwhpkcpfadsdrqvxjv.supabase.co";
   const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt1Y3docGtjcGZhZHNkcnF2eGp2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4NjQ2NzAsImV4cCI6MjA5NDQ0MDY3MH0.PIUz00Qm_r6NkCKL8I4XQSSmvR02qt2VPwJQVY2s2qg";
-  const _supabase = supabase.createClient(supabaseUrl, supabaseUrl === "https://kucwhpkcpfadsdrqvxjv.supabase.co" ? supabaseKey : "");
+  
+  // FIX: Directly passing parameters to fully validate database write privileges
+  const _supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
   window.addEventListener('DOMContentLoaded', () => {
     fetchUnreadCounts();
@@ -140,7 +142,6 @@ body {
 
   async function fetchUnreadCounts() {
     try {
-      // Pull items to filter unread states locally for safety coverage
       const { data, error } = await _supabase
         .from('scrapbook')
         .select('type, is_read');
@@ -150,7 +151,6 @@ body {
       let unreadCounts = { text: 0, voice: 0, doodle: 0 };
 
       data.forEach(item => {
-        // Count items if they are explicitly false OR null legacy entries
         if (item.is_read === false || item.is_read === null) {
           if (unreadCounts[item.type] !== undefined) {
             unreadCounts[item.type]++;
@@ -162,7 +162,7 @@ body {
       renderBadgeElement("badge-voice", unreadCounts.voice);
       renderBadgeElement("badge-doodle", unreadCounts.doodle);
 
-      // Attach counts to URLs dynamically so inbox.html processes them beautifully
+      // Attach dynamic counts to URL query strings for header consumption
       document.getElementById('link-text').href = `inbox.html?view=text&unread=${unreadCounts.text}`;
       document.getElementById('link-voice').href = `inbox.html?view=voice&unread=${unreadCounts.voice}`;
       document.getElementById('link-doodle').href = `inbox.html?view=doodle&unread=${unreadCounts.doodle}`;
