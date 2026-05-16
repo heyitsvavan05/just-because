@@ -4,11 +4,80 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Bebi's Memory Jar</title>
-  
+
   <link rel="stylesheet" href="style.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  
+
   <style>
+    /* FIXES THE SQUISHEED LAYOUT & CENTER ALIGNS CONTENT VERTICALLY */
+    body {
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      background-color: #0f172a; /* Fallback matching your theme */
+    }
+
+    /* This wrapper vertically balances everything so it doesn't get crammed at the top */
+    .app-screen-wrapper {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center; 
+      align-items: center;
+      width: 100%;
+      max-width: 400px; /* Sweetsite width for phone screens */
+      margin: 0 auto;
+      padding: 30px 20px;
+      box-sizing: border-box;
+    }
+
+    .folder-header {
+      text-align: center;
+      margin-bottom: 35px;
+      width: 100%;
+    }
+
+    /* Fixed folder grid layout that fills width properly without side compression */
+    .folder-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    /* Custom padding overrides to make buttons tactile and roomy */
+    .folder-card {
+      background: #1e293b !important;
+      padding: 20px 24px !important;
+      border-radius: 16px !important;
+      display: flex !important;
+      align-items: center !important;
+      gap: 20px !important;
+      box-shadow: 0 10px 25px -5px rgba(0,0,0,0.3) !important;
+      transition: transform 0.1s ease;
+      width: 100% !important;
+      box-sizing: border-box !important;
+    }
+    
+    .folder-card:active {
+      transform: scale(0.98);
+    }
+
+    .folder-icon {
+      font-size: 28px !important;
+      margin: 0 !important;
+    }
+
+    .folder-card p {
+      margin: 0 !important;
+      font-size: 18px !important;
+      font-weight: 600 !important;
+      color: #f8fafc !important;
+    }
+
     /* WhatsApp Setup Modal Styles ONLY - Keeps your main style.css clean */
     .modal-overlay {
       position: fixed; top: 0; left: 0; width: 100%; height: 100%;
@@ -35,34 +104,38 @@
 </head>
 <body>
 
-  <div class="folder-header">
-    <h1>Bebi's Memory Jar 🍯</h1>
-    <p>Open a folder to see what I left for you...</p>
-  </div>
+  <div class="app-screen-wrapper">
 
-  <div class="folder-grid">
-    
-    <a href="inbox.html?view=text" class="folder-card" style="text-decoration: none;">
-      <div class="folder-icon">💬</div>
-      <p>Messages</p>
-    </a>
-    
-    <a href="inbox.html?view=voice" class="folder-card" style="text-decoration: none;">
-      <div class="folder-icon">🎤</div>
-      <p>Voice Notes</p>
-    </a>
-    
-    <a href="inbox.html?view=doodle" class="folder-card" style="text-decoration: none;">
-      <div class="folder-icon">🎨</div>
-      <p>Doodles</p>
-    </a>
-    
-  </div>
+    <div class="folder-header">
+      <h1>Bebi's Memory Jar 🍯</h1>
+      <p style="color: #94a3b8; margin: 8px 0 0 0;">Open a folder to see what I left for you...</p>
+    </div>
 
-  <div class="notification-footer" style="margin-top: 50px; text-align: center; width: 100%;">
-    <button onclick="openNotificationModal()" style="background: transparent; color: #94a3b8; border: none; font-size: 12px; cursor: pointer; text-decoration: underline; font-style: italic;">
-      📱 Setup System Alerts
-    </button>
+    <div class="folder-grid">
+
+      <a href="inbox.html?view=text" class="folder-card" style="text-decoration: none;">
+        <div class="folder-icon">💬</div>
+        <p>Messages</p>
+      </a>
+
+      <a href="inbox.html?view=voice" class="folder-card" style="text-decoration: none;">
+        <div class="folder-icon">🎤</div>
+        <p>Voice Notes</p>
+      </a>
+
+      <a href="inbox.html?view=doodle" class="folder-card" style="text-decoration: none;">
+        <div class="folder-icon">🎨</div>
+        <p>Doodles</p>
+      </a>
+
+    </div>
+
+    <div class="notification-footer" style="margin-top: 45px; text-align: center; width: 100%;">
+      <button onclick="openNotificationModal()" style="background: transparent; color: #94a3b8; border: none; font-size: 13px; cursor: pointer; text-decoration: underline; font-style: italic; display: inline-flex; align-items: center; gap: 6px;">
+        📲 <span>Setup System Alerts</span>
+      </button>
+    </div>
+
   </div>
 
   <div id="notificationModal" class="modal-overlay">
@@ -89,7 +162,7 @@
 
     function openNotificationModal() { document.getElementById('notificationModal').classList.add('open'); }
     function closeNotificationModal() { document.getElementById('notificationModal').classList.remove('open'); }
-    
+
     function getCallMeBotKey() { window.open(`https://api.whatsapp.com/send?phone=34644975353&text=${encodeURIComponent("I allow callmebot to send me messages")}`, '_blank'); }
 
     async function saveNotificationData() {
