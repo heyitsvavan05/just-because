@@ -33,6 +33,7 @@ body {
     align-items: center;
     padding: 1rem 1.2rem;
     border-bottom: 1px solid #2d3748;
+    color: white;
 }
 
 .ngl-tabs span {
@@ -70,10 +71,12 @@ body {
     align-items: center;
     justify-content: center;
     margin-right: 12px;
+    flex-shrink: 0;
 }
 
 .ngl-text-content {
     flex: 1;
+    overflow: hidden;
 }
 
 .ngl-text-content p {
@@ -100,6 +103,7 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
+    padding: 20px;
 }
 
 .modal-content {
@@ -108,6 +112,8 @@ body {
     padding: 20px;
     border-radius: 16px;
     max-width: 90%;
+    max-height: 80vh;
+    overflow-y: auto;
 }
 
 .hidden {
@@ -143,10 +149,12 @@ body {
     </div>
 </div>
 
-<!-- Supabase -->
+<!-- Supabase (FIXED - MUST MATCH ALL FILES) -->
 <script>
 const SUPABASE_URL = "https://kucwhpkcpfadsdrqvxjv.supabase.co";
-const SUPABASE_KEY = "YOUR_KEY";
+
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt1Y3docGtjcGZhZHNkcnF2eGp2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4NjQ2NzAsImV4cCI6MjA5NDQ0MDY3MH0.PIUz00Qm_r6NkCKL8I4XQSSmvR02qt2VPwJQVY2s2qg";
+
 const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 </script>
 
@@ -167,7 +175,7 @@ const titles = {
 
 document.getElementById("folder-title").innerText = titles[folderType] || "INBOX";
 
-// status (from shared.js)
+// optional status
 if (typeof getInboxStatus === "function") {
     document.getElementById("inbox-status").innerText = getInboxStatus();
 
@@ -176,8 +184,8 @@ if (typeof getInboxStatus === "function") {
     }, 60000);
 }
 
-// load notes
 async function loadNotes() {
+
     const { data, error } = await _supabase
         .from('scrapbook')
         .select('*')
@@ -187,23 +195,31 @@ async function loadNotes() {
     const list = document.getElementById('inbox-list');
     list.innerHTML = "";
 
+    if (error) {
+        list.innerHTML = "<p style='color:red;text-align:center;'>Error loading data</p>";
+        return;
+    }
+
     if (!data || data.length === 0) {
         list.innerHTML = "<p style='color:#94a3b8; text-align:center; padding:30px;'>Nothing here yet...</p>";
         return;
     }
 
     data.forEach(item => {
+
         const card = document.createElement('div');
         card.className = "ngl-card";
 
-        let preview = item.content;
+        let preview = "";
+
         if (item.type === "doodle") preview = "🎨 Doodle";
-        if (item.type === "voice") preview = "🎤 Voice Note";
+        else if (item.type === "voice") preview = "🎤 Voice Note";
+        else preview = item.content || "";
 
         card.innerHTML = `
             <div class="ngl-mail-icon">💌</div>
             <div class="ngl-text-content">
-                <p>${preview.substring(0,40)}</p>
+                <p>${preview.substring(0, 40)}</p>
                 <span>${new Date(item.created_at).toLocaleDateString()}</span>
             </div>
         `;
@@ -217,11 +233,13 @@ function openModal(item) {
     const body = document.getElementById("modal-body");
 
     if (item.type === "doodle") {
-        body.innerHTML = `<img src="${item.content}" style="max-width:100%;">`;
+        body.innerHTML = `<img src="${item.content}" style="max-width:100%; border-radius:10px;">`;
+
     } else if (item.type === "voice") {
         body.innerHTML = `<audio controls src="${item.content}" style="width:100%"></audio>`;
+
     } else {
-        body.innerHTML = `<p style="white-space:pre-wrap;">${item.content}</p>`;
+        body.innerHTML = `<p style="white-space:pre-wrap;">${item.content || ""}</p>`;
     }
 
     document.getElementById("modal").classList.remove("hidden");
