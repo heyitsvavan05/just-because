@@ -85,16 +85,19 @@ body {
 
 <div class="ngl-header">
   <div onclick="location.href='index.html'">◀</div>
+
   <div>
     <div id="folder-title">INBOX</div>
     <div id="inbox-status" style="font-size:12px;color:#94a3b8;"></div>
   </div>
+
 </div>
 
 <main id="inbox-list"></main>
 
 </div>
 
+<!-- MODAL -->
 <div id="modal" class="modal hidden" onclick="closeModal()">
   <div class="modal-content" onclick="event.stopPropagation()">
     <div id="modal-body"></div>
@@ -102,19 +105,32 @@ body {
   </div>
 </div>
 
+<!-- SUPABASE (FIXED + CONSISTENT) -->
 <script>
 const SUPABASE_URL = "https://kucwhpkcpfadsdrqvxjv.supabase.co";
-const SUPABASE_KEY = "YOUR_SUPABASE_ANON_KEY";
-const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const SUPABASE_KEY = "PASTE_YOUR_ANON_KEY_HERE";
 
+const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+</script>
+
+<!-- SHARED SYSTEM -->
+<script src="shared.js"></script>
+
+<script>
 const urlParams = new URLSearchParams(location.search);
 const folderType = urlParams.get("view") || "text";
 
 document.getElementById("folder-title").innerText =
   folderType.toUpperCase();
 
+// status (alive system safe)
+if (typeof getInboxStatus === "function") {
+  document.getElementById("inbox-status").innerText = getInboxStatus();
+}
+
 async function loadNotes() {
-  const { data } = await _supabase
+
+  const { data, error } = await supabaseClient
     .from("scrapbook")
     .select("*")
     .eq("type", folderType)
@@ -123,7 +139,12 @@ async function loadNotes() {
   const list = document.getElementById("inbox-list");
   list.innerHTML = "";
 
-  if (!data?.length) {
+  if (error) {
+    list.innerHTML = "<p style='text-align:center;color:red'>Failed to load</p>";
+    return;
+  }
+
+  if (!data || data.length === 0) {
     list.innerHTML = "<p style='text-align:center;color:#94a3b8'>Empty</p>";
     return;
   }
@@ -132,10 +153,15 @@ async function loadNotes() {
     const div = document.createElement("div");
     div.className = "ngl-card";
 
+    const preview =
+      item.type === "doodle" ? "🎨 Doodle" :
+      item.type === "voice" ? "🎤 Voice Note" :
+      (item.content || "").slice(0, 40);
+
     div.innerHTML = `
       <div class="ngl-mail-icon">💌</div>
       <div class="ngl-text-content">
-        <p>${(item.content || "").slice(0, 40)}</p>
+        <p>${preview}</p>
         <span>${new Date(item.created_at).toLocaleDateString()}</span>
       </div>
     `;
