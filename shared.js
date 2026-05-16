@@ -1,13 +1,16 @@
-// =============================
-// BEBI'S MEMORY JAR - CORE ENGINE
-// =============================
+// ==========================================
+// BEBI'S MEMORY JAR - CORE ENGINE & ALERTS
+// ==========================================
 
 const BebiEngine = (function() {
+
+  // EmailJS Configuration Properties
+  const MAIL_SERVICE = "service_m0nwde2";
+  const MAIL_TEMPLATE = "template_pl7h7e9";
 
   // 1. TIMEZONE CONTROLLER
   function getTimeData() {
     const now = new Date();
-    // Force calculate exact hours regardless of device location
     const phTime = new Date(now.toLocaleString("en-US", { timeZone: "Asia/Manila" }));
     const inTime = new Date(now.toLocaleString("en-US", { timeZone: "Asia/Kolkata" }));
 
@@ -17,7 +20,7 @@ const BebiEngine = (function() {
     };
   }
 
-  // 2. HER STATUS (Anchored to India Time - checking on your wife)
+  // 2. HER STATUS (Anchored to India Time)
   function getEmotionalStatus() {
     const times = getTimeData();
     const herHour = times.inHour;
@@ -34,7 +37,7 @@ const BebiEngine = (function() {
     return "🌤️ Evening is coming... she might start work soon.";
   }
 
-  // 3. YOUR CONTEXT (Anchored to Philippine Time - for when she views your status)
+  // 3. YOUR CONTEXT (Anchored to Philippine Time)
   function getAliveMood() {
     const times = getTimeData();
     const hisHour = times.phHour;
@@ -84,35 +87,59 @@ const BebiEngine = (function() {
     return list[Math.floor(Math.random() * list.length)];
   }
 
-  // 6. THEME ENGINE (AUTO MOOD SHIFT WITH CARD THEMING)
+  // 6. THEME ENGINE (AUTO MOOD SHIFT)
   function applyThemeMood() {
     const times = getTimeData();
-    const herHour = times.inHour; // Base the mood on her environment
+    const herHour = times.inHour;
     const root = document.documentElement;
 
     if (herHour >= 20 || herHour < 5) {
       root.style.setProperty("--accent-yellow", "#fbbf24");
       root.style.setProperty("--text-dim", "#94a3b8");
       root.style.setProperty("--bg-mood", "#0b1220"); 
-      root.style.setProperty("--card-mood", "#111c30"); // Premium dark-toned night cards
+      root.style.setProperty("--card-mood", "#111c30"); 
     } else {
       root.style.setProperty("--accent-yellow", "#fde047");
       root.style.setProperty("--text-dim", "#a3b1c6");
       root.style.setProperty("--bg-mood", "#0f172a"); 
-      root.style.setProperty("--card-mood", "#1e293b"); // Standard slate cards
+      root.style.setProperty("--card-mood", "#1e293b"); 
     }
   }
 
-  // 7. SAFE ARCHITECTURE BOOT SEQUENCE
+  // 7. EXTERNAL DISPATCH: EMAILJS DELIVERY SYSTEM
+  async function dispatchAlert(type = "text", textPreview = "") {
+    if (typeof emailjs === "undefined") {
+      console.warn("EmailJS script not initialized yet.");
+      return;
+    }
+
+    const typeDescriptions = {
+      text: "📝 A sweet text note",
+      voice: "🎤 A hidden audio recording",
+      doodle: "🎨 A custom hand-drawn sketch"
+    };
+
+    const payloadParams = {
+      memory_type: typeDescriptions[type] || "🎁 A fresh memory token",
+      message_preview: textPreview ? textPreview : "Open your secure app dashboard link to uncover it... ✨"
+    };
+
+    try {
+      await emailjs.send(MAIL_SERVICE, MAIL_TEMPLATE, payloadParams);
+      console.log("📨 Security notification transmitted successfully.");
+    } catch (err) {
+      console.error("❌ Notification delivery failed:", err);
+    }
+  }
+
+  // 8. SAFE ARCHITECTURE BOOT SEQUENCE
   function wakeUp() {
     try {
       applyThemeMood();
 
-      // Safely update elements if they exist on the current page
       const statusEl = document.getElementById("home-status");
       if (statusEl) statusEl.innerText = getEmotionalStatus();
 
-      // INJECTS HOME SCREEN WHISPER NOTE
       const whisperEl = document.getElementById("whisper-message");
       if (whisperEl && !whisperEl.innerText) { 
         whisperEl.innerText = `✨ "${getRandomMessage('soft')}"`;
@@ -125,13 +152,16 @@ const BebiEngine = (function() {
       if (inboxToneEl) inboxToneEl.innerText = getInboxStatus();
 
     } catch (error) {
-      console.warn("Engine resting... handled gracefully.", error);
+      console.warn("Engine handling exception gracefully.", error);
     }
   }
 
-  return { boot: wakeUp, getMessage: getRandomMessage };
+  return { 
+    boot: wakeUp, 
+    getMessage: getRandomMessage,
+    notify: dispatchAlert
+  };
 
 })();
 
-// Auto-start when the page loads
 document.addEventListener("DOMContentLoaded", BebiEngine.boot);
