@@ -18,67 +18,89 @@
       margin: 0;
       padding: 20px;
       box-sizing: border-box;
-      overflow-x: hidden;
-    }
-
-    /* Memory Jar Main Dashboard Card */
-    .mood-card {
-      width: 100%;
-      max-width: 360px;
-      background: #1e293b;
-      padding: 30px 24px;
-      border-radius: 20px;
-      box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.4);
-      text-align: center;
-      box-sizing: border-box;
     }
 
     h1 {
       font-size: 24px;
       color: #f59e0b;
-      margin-top: 0;
-      margin-bottom: 10px;
+      margin-bottom: 5px;
+      text-align: center;
     }
 
     .subtitle {
       font-size: 14px;
       color: #94a3b8;
-      margin-bottom: 25px;
+      margin-bottom: 35px;
+      text-align: center;
     }
 
-    /* Memory Media Folder Layout Grid */
-    .mood-options {
+    /* THE REAL INTERACTIVE FOLDER GRID */
+    .folder-grid {
+      display: grid;
+      grid-template-cols: repeat(2, 1fr);
+      gap: 20px;
+      width: 100%;
+      max-width: 360px;
+      box-sizing: border-box;
+    }
+
+    /* Visual Pseudo-Element Folder Shapes */
+    .folder-wrapper {
+      text-decoration: none;
+      color: inherit;
       display: flex;
       flex-direction: column;
-      gap: 14px;
+      align-items: center;
+      cursor: pointer;
     }
 
-    .mood-btn {
+    .folder-shape {
+      position: relative;
+      width: 110px;
+      height: 85px;
       background: #334155;
-      color: white;
-      border: none;
-      padding: 16px;
-      border-radius: 12px;
-      font-size: 16px;
-      font-weight: 600;
-      cursor: pointer;
+      border-radius: 0px 12px 12px 12px;
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 12px;
-      transition: background 0.2s, transform 0.1s;
-      text-decoration: none;
+      font-size: 28px;
+      transition: transform 0.2s, background 0.2s;
     }
 
-    .mood-btn:active {
+    /* The Folder Tab Top Accent */
+    .folder-shape::before {
+      content: '';
+      position: absolute;
+      top: -12px;
+      left: 0;
+      width: 45px;
+      height: 12px;
+      background: #334155;
+      border-radius: 6px 6px 0 0;
+    }
+
+    .folder-wrapper:active .folder-shape {
+      transform: scale(0.95);
       background: #475569;
-      transform: scale(0.98);
+    }
+    .folder-wrapper:active .folder-shape::before {
+      background: #475569;
     }
 
-    /* Media Category Folder Accent Highlights */
-    .mood-btn.messages { border-left: 5px solid #f59e0b; }
-    .mood-btn.voice { border-left: 5px solid #10b981; }
-    .mood-btn.doodles { border-left: 5px solid #ec4899; }
+    /* Color Varied Folder Highlights */
+    .folder-wrapper.messages .folder-shape, .folder-wrapper.messages .folder-shape::before { background: #f59e0b; }
+    .folder-wrapper.voice .folder-shape, .folder-wrapper.voice .folder-shape::before { background: #10b981; }
+    .folder-wrapper.doodles .folder-shape, .folder-wrapper.doodles .folder-shape::before { background: #ec4899; }
+
+    /* Folder Typography Labels */
+    .folder-label {
+      margin-top: 12px;
+      font-size: 14px;
+      font-weight: 600;
+      color: #cbd5e1;
+      text-align: center;
+    }
 
     audio { display: none; }
 
@@ -111,22 +133,13 @@
     .modal-box h4 { margin: 0 0 10px 0; color: #f59e0b; font-size: 18px; }
     .modal-box p { margin: 0 0 20px 0; color: #94a3b8; font-size: 13px; line-height: 1.4; }
     .modal-input {
-      width: 100%;
-      padding: 12px;
-      background: #0f172a;
-      border: 1px solid #334155;
-      border-radius: 8px;
-      color: white;
-      font-size: 16px;
-      text-align: center;
-      margin-bottom: 15px;
-      box-sizing: border-box;
+      width: 100%; padding: 12px; background: #0f172a; border: 1px solid #334155;
+      border-radius: 8px; color: white; font-size: 16px; text-align: center;
+      margin-bottom: 15px; box-sizing: border-box;
     }
     .modal-input:focus { border-color: #f59e0b; outline: none; }
     .modal-actions { display: flex; gap: 10px; }
-    .modal-btn {
-      flex: 1; padding: 12px; border-radius: 8px; font-weight: bold; font-size: 14px; cursor: pointer; border: none;
-    }
+    .modal-btn { flex: 1; padding: 12px; border-radius: 8px; font-weight: bold; font-size: 14px; cursor: pointer; border: none; }
     .btn-cancel { background: #334155; color: #94a3b8; }
     .btn-confirm { background: #25D366; color: white; }
   </style>
@@ -137,21 +150,24 @@
     <source src="birthday-bgm.mp3" type="audio/mpeg">
   </audio>
 
-  <div class="mood-card">
-    <h1>Bebi's Memory Jar 🍯</h1>
-    <p class="subtitle">Open a folder to see what I left for you...</p>
+  <h1>Bebi's Memory Jar 🍯</h1>
+  <p class="subtitle">Open a folder to see what I left for you...</p>
     
-    <div class="mood-options">
-      <a href="inbox.html" class="mood-btn messages" onclick="handleNavigation(event, 'inbox.html')">
-        <span>💬</span> Messages
-      </a>
-      <a href="inbox.html" class="mood-btn voice" onclick="handleNavigation(event, 'inbox.html')">
-        <span>🎤</span> Voice Notes
-      </a>
-      <a href="inbox.html" class="mood-btn doodles" onclick="handleNavigation(event, 'inbox.html')">
-        <span>🎨</span> Doodles
-      </a>
-    </div>
+  <div class="folder-grid">
+    <a href="inbox.html" class="folder-wrapper messages" onclick="handleNavigation(event, 'inbox.html')">
+      <div class="folder-shape">💬</div>
+      <div class="folder-label">Messages</div>
+    </a>
+    
+    <a href="inbox.html" class="folder-wrapper voice" onclick="handleNavigation(event, 'inbox.html')">
+      <div class="folder-shape">🎤</div>
+      <div class="folder-label">Voice Notes</div>
+    </a>
+    
+    <a href="inbox.html" class="folder-wrapper doodles" onclick="handleNavigation(event, 'inbox.html')">
+      <div class="folder-shape">🎨</div>
+      <div class="folder-label">Doodles</div>
+    </a>
   </div>
 
   <div class="notification-footer" style="margin: 60px auto 20px auto; padding: 20px; max-width: 340px; text-align: center; border-top: 1px solid rgba(245, 158, 11, 0.2); box-sizing: border-box; width: 100%;">
