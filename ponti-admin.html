@@ -2,59 +2,29 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Admin</title>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
-body {
-  background: #0f172a;
-  color: white;
-  font-family: sans-serif;
-  display: flex;
-  justify-content: center;
-}
+body { background:#0f172a; color:white; font-family:sans-serif; display:flex; justify-content:center; }
+.box { max-width:420px; width:100%; padding:20px; }
 
-.box {
-  width: 100%;
-  max-width: 420px;
-  padding: 20px;
-}
-
-textarea, select, button {
-  width: 100%;
-  padding: 10px;
-  margin-top: 10px;
-  border-radius: 8px;
-  border: none;
-}
+textarea, select, button { width:100%; margin-top:10px; padding:10px; }
 
 canvas {
-  background: white;
-  width: 100%;
-  height: 300px;
-  border-radius: 10px;
-  touch-action: none;
+  background:white;
+  width:100%;
+  height:300px;
+  touch-action:none;
 }
 
-.memory-item {
-  background: #1e293b;
-  padding: 10px;
-  margin-top: 10px;
-  border-radius: 8px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.delete-btn {
-  background: red;
-  color: white;
-  border: none;
-  padding: 5px 8px;
-  border-radius: 6px;
-  cursor: pointer;
+.delete {
+  background:red;
+  color:white;
+  border:none;
+  padding:6px;
+  margin-top:10px;
 }
 </style>
 </head>
@@ -71,173 +41,59 @@ canvas {
   <option value="voice">voice</option>
 </select>
 
-<textarea id="text" placeholder="Write something..."></textarea>
+<textarea id="text"></textarea>
 
 <canvas id="canvas" style="display:none;"></canvas>
-
-<!-- VOICE -->
-<div id="voiceBox" style="display:none;">
-  <button onclick="startRecord()">🎤 Record</button>
-  <button onclick="stopRecord()">⏹ Stop</button>
-  <audio id="audio" controls style="width:100%; margin-top:10px;"></audio>
-</div>
 
 <button onclick="clearCanvas()">Clear</button>
 <button onclick="post()">Post</button>
 
 <p id="status"></p>
 
-<hr>
-
-<h3>Memories</h3>
-<div id="list"></div>
-
 </div>
 
 <script>
-const SUPABASE_URL = "https://kucwhpkcpfadsdrqvxjv.supabase.co";
-const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt1Y3docGtjcGZhZHNkcnF2eGp2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4NjQ2NzAsImV4cCI6MjA5NDQ0MDY3MH0.PIUz00Qm_r6NkCKL8I4XQSSmvR02qt2VPwJQVY2s2qg";
-const supabase = supabaseJs.createClient(SUPABASE_URL, SUPABASE_KEY);
-
-/* =========================
-   CANVAS
-========================= */
+const sb = supabase.createClient(
+  "https://kucwhpkcpfadsdrqvxjv.supabase.co",
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt1Y3docGtjcGZhZHNkcnF2eGp2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4NjQ2NzAsImV4cCI6MjA5NDQ0MDY3MH0.PIUz00Qm_r6NkCKL8I4XQSSmvR02qt2VPwJQVY2s2qg"
+);
 
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
 
 let drawing = false;
 
-function resizeCanvas(){
-  canvas.width = canvas.offsetWidth;
-  canvas.height = 300;
-  ctx.lineWidth = 3;
-}
+canvas.onmousedown = e => { drawing = true; ctx.beginPath(); draw(e); };
+canvas.onmouseup = () => drawing = false;
+canvas.onmousemove = draw;
 
-resizeCanvas();
-
-canvas.addEventListener("mousedown", e => {
-  drawing = true;
-  ctx.beginPath();
-  ctx.moveTo(e.offsetX, e.offsetY);
-});
-
-canvas.addEventListener("mousemove", e => {
+function draw(e){
   if(!drawing) return;
-  ctx.lineTo(e.offsetX, e.offsetY);
+  const r = canvas.getBoundingClientRect();
+  ctx.lineTo(e.clientX - r.left, e.clientY - r.top);
   ctx.stroke();
-});
-
-canvas.addEventListener("mouseup", () => drawing = false);
+  ctx.beginPath();
+}
 
 function clearCanvas(){
   ctx.clearRect(0,0,canvas.width,canvas.height);
 }
 
-/* =========================
-   VOICE
-========================= */
-
-let recorder;
-let chunks = [];
-let audioURL = "";
-
-async function startRecord(){
-  const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-  recorder = new MediaRecorder(stream);
-
-  recorder.ondataavailable = e => chunks.push(e.data);
-
-  recorder.onstop = () => {
-    const blob = new Blob(chunks, { type: "audio/webm" });
-    chunks = [];
-
-    audioURL = URL.createObjectURL(blob);
-    document.getElementById("audio").src = audioURL;
-  };
-
-  recorder.start();
-}
-
-function stopRecord(){
-  recorder.stop();
-}
-
-/* =========================
-   UI TOGGLE
-========================= */
-
 function toggle(){
-  const t = document.getElementById("type").value;
-
-  canvas.style.display = t === "doodle" ? "block" : "none";
-  document.getElementById("voiceBox").style.display = t === "voice" ? "block" : "none";
+  canvas.style.display = document.getElementById("type").value === "doodle" ? "block" : "none";
 }
-
-/* =========================
-   POST
-========================= */
 
 async function post(){
   const type = document.getElementById("type").value;
+
   let content = "";
+  if(type === "text") content = document.getElementById("text").value;
+  if(type === "doodle") content = canvas.toDataURL();
 
-  if(type === "text"){
-    content = document.getElementById("text").value;
-  }
-
-  if(type === "doodle"){
-    content = canvas.toDataURL();
-  }
-
-  if(type === "voice"){
-    content = audioURL;
-  }
-
-  if(!content){
-    document.getElementById("status").innerText = "Empty!";
-    return;
-  }
-
-  await supabase.from("scrapbook").insert([{ type, content }]);
+  await sb.from("scrapbook").insert([{ type, content }]);
 
   document.getElementById("status").innerText = "Saved ✔";
-
-  load();
 }
-
-/* =========================
-   LOAD + DELETE (RESTORED)
-========================= */
-
-async function load(){
-  const { data } = await supabase
-    .from("scrapbook")
-    .select("*")
-    .order("created_at", { ascending: false });
-
-  const list = document.getElementById("list");
-  list.innerHTML = "";
-
-  data?.forEach(item => {
-    const div = document.createElement("div");
-    div.className = "memory-item";
-
-    div.innerHTML = `
-      <span>${item.type}</span>
-      <button class="delete-btn" onclick="del('${item.id}')">Delete</button>
-    `;
-
-    list.appendChild(div);
-  });
-}
-
-async function del(id){
-  await supabase.from("scrapbook").delete().eq("id", id);
-  load();
-}
-
-load();
 </script>
 
 </body>
