@@ -11,17 +11,15 @@
   <style>
     /* FIXES THE SQUEEZED LAYOUT & CENTER ALIGNS CONTENT VERTICALLY */
 
-<script src="shared.js"></script>
     body {
       margin: 0;
       padding: 0;
       min-height: 100vh;
       display: flex;
       flex-direction: column;
-      background-color: #0f172a; /* Fallback matching your theme */
+      background-color: #0f172a;
     }
 
-    /* This wrapper vertically balances everything so it doesn't get crammed at the top */
     .app-screen-wrapper {
       flex: 1;
       display: flex;
@@ -29,7 +27,7 @@
       justify-content: center; 
       align-items: center;
       width: 100%;
-      max-width: 400px; /* Sweet spot width for phone screens */
+      max-width: 400px;
       margin: 0 auto;
       padding: 30px 20px;
       box-sizing: border-box;
@@ -41,7 +39,6 @@
       width: 100%;
     }
 
-    /* Fixed folder grid layout that fills width properly without side compression */
     .folder-grid {
       display: flex;
       flex-direction: column;
@@ -50,7 +47,6 @@
       box-sizing: border-box;
     }
 
-    /* Custom padding overrides to make buttons tactile and roomy */
     .folder-card {
       background: #1e293b !important;
       padding: 20px 24px !important;
@@ -81,13 +77,19 @@
     }
   </style>
 </head>
+
 <body>
 
   <div class="app-screen-wrapper">
 
     <div class="folder-header">
       <h1>Bebi's Memory Jar 🍯</h1>
-      <p style="color: #94a3b8; margin: 8px 0 0 0;">Open a folder to see what I left for you...</p>
+      <p style="color: #94a3b8; margin: 8px 0 0 0;">
+        Open a folder to see what I left for you...
+      </p>
+
+      <!-- OPTIONAL: live emotional status -->
+      <p id="home-status" style="color:#94a3b8; font-size:13px; margin-top:8px;"></p>
     </div>
 
     <div class="folder-grid">
@@ -111,10 +113,26 @@
 
   </div>
 
+  <!-- Supabase init -->
   <script>
     const SUPABASE_URL = "https://kucwhpkcpfadsdrqvxjv.supabase.co";
-    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt1Y3docGtjcGZhZHNkcnF2eGp2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4NjQ2NzAsImV4cCI6MjA5NDQ0MDY3MH0.PIUz00Qm_r6NkCKL8I4XQSSmvR02qt2VPwJQVY2s2qg";
+    const SUPABASE_KEY = "YOUR_KEY";
     const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
   </script>
+
+  <!-- Shared emotional system -->
+  <script src="shared.js"></script>
+
+  <!-- Page logic -->
+  <script>
+    if (typeof getEmotionalStatus === "function") {
+      document.getElementById("home-status").innerText = getEmotionalStatus();
+
+      setInterval(() => {
+        document.getElementById("home-status").innerText = getEmotionalStatus();
+      }, 60000);
+    }
+  </script>
+
 </body>
 </html>
