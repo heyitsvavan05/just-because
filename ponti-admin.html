@@ -24,23 +24,10 @@ body {
   box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
   margin-bottom: 20px;
 }
-h2 {
-  margin: 0 0 6px 0;
-  color: #fde047;
-  font-size: 22px;
-}
-p.subtitle {
-  margin: 0 0 20px 0;
-  color: #94a3b8;
-  font-size: 14px;
-}
-label {
-  display: block;
-  margin-bottom: 8px;
-  font-size: 14px;
-  font-weight: bold;
-  color: #cbd5e1;
-}
+h2 { margin: 0 0 6px 0; color: #fde047; font-size: 22px; }
+p.subtitle { margin: 0 0 20px 0; color: #94a3b8; font-size: 14px; }
+label { display: block; margin-bottom: 8px; font-size: 14px; font-weight: bold; color: #cbd5e1; }
+
 select, textarea {
   width: 100%;
   padding: 12px;
@@ -52,12 +39,9 @@ select, textarea {
   font-size: 15px;
   box-sizing: border-box;
 }
-select:focus, textarea:focus {
-  outline: none;
-  border-color: #f59e0b;
-}
+select:focus, textarea:focus { outline: none; border-color: #f59e0b; }
 
-/* ADVANCED CANVAS WORKSPACE STYLES */
+/* CANVAS STYLES */
 #canvas-container {
   background: #0f172a;
   border: 2px dashed #334155;
@@ -69,83 +53,51 @@ select:focus, textarea:focus {
   align-items: center;
   transition: all 0.3s ease;
 }
-/* Fullscreen mode toggle classes */
 #canvas-container.fullscreen-workspace {
-  position: fixed;
-  inset: 0;
-  z-index: 999;
-  border: none;
-  border-radius: 0;
-  justify-content: center;
-  background: #1e293b;
-  padding: 20px;
+  position: fixed; inset: 0; z-index: 999; border: none; border-radius: 0;
+  justify-content: center; background: #1e293b; padding: 20px;
 }
-#canvasBoxBounds {
-  width: 100%;
-  max-width: 400px;
-  aspect-ratio: 1/1;
-  position: relative;
+#canvasBoxBounds { width: 100%; max-width: 400px; aspect-ratio: 1/1; position: relative; }
+canvas { background: white; border-radius: 8px; width: 100%; height: 100%; cursor: crosshair; touch-action: none; }
+
+/* TOOL & COLOR CONTROLS */
+.tools-row { display: flex; gap: 8px; width: 100%; max-width: 400px; margin-top: 10px; }
+.tool-btn { 
+  flex: 1; padding: 8px; background: #334155; color: white; border: 2px solid transparent; 
+  border-radius: 8px; cursor: pointer; font-size: 14px; transition: 0.2s;
 }
-canvas {
-  background: white;
-  border-radius: 8px;
-  width: 100%;
-  height: 100%;
-  cursor: crosshair;
-  touch-action: none;
-}
+.tool-btn.active { border-color: #fde047; background: #475569; font-weight: bold; }
+
 .canvas-controls {
-  display: flex;
-  gap: 10px;
-  width: 100%;
-  max-width: 400px;
-  margin-top: 15px;
-  align-items: center;
+  display: flex; gap: 8px; width: 100%; max-width: 400px; margin-top: 10px; align-items: center;
+  flex-wrap: wrap; justify-content: flex-start;
 }
 .color-swatch {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  cursor: pointer;
-  border: 2px solid transparent;
+  width: 28px; height: 28px; border-radius: 50%; cursor: pointer; border: 2px solid transparent;
 }
-.color-swatch.active { border-color: white; transform: scale(1.1); }
+.color-swatch.active { border-color: white; transform: scale(1.15); }
 
 button {
-  width: 100%;
-  background: #f59e0b;
-  color: #0f172a;
-  border: none;
-  padding: 14px;
-  border-radius: 8px;
-  font-size: 16px;
-  font-weight: bold;
-  cursor: pointer;
+  width: 100%; background: #f59e0b; color: #0f172a; border: none; padding: 14px;
+  border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer;
 }
-.btn-secondary {
-  background: #475569;
-  color: white;
-  padding: 10px;
-  font-size: 14px;
-}
+.btn-secondary { background: #475569; color: white; padding: 10px; font-size: 14px; }
+.btn-danger { background: #ef4444; color: white; padding: 6px 12px; font-size: 12px; width: auto; border-radius: 6px; }
 
-#status-message {
-  text-align: center;
-  font-size: 14px;
-  margin-top: 14px;
-  font-weight: bold;
-  display: none;
-}
+#status-message { text-align: center; font-size: 14px; margin-top: 14px; font-weight: bold; display: none; }
 .success { color: #10b981; }
 .error { color: #ef4444; }
-.nav-link {
-  display: block;
-  text-align: center;
-  color: #94a3b8;
-  text-decoration: none;
-  font-size: 14px;
-  margin-top: 10px;
+
+/* MEMORY MANAGER LIST */
+.memory-list { margin-top: 20px; display: flex; flex-direction: column; gap: 10px; }
+.memory-item {
+  background: #334155; padding: 12px; border-radius: 8px; display: flex;
+  justify-content: space-between; align-items: center; gap: 10px;
 }
+.memory-content { display: flex; align-items: center; gap: 10px; overflow: hidden; }
+.memory-type { font-size: 11px; font-weight: bold; color: #fde047; text-transform: uppercase; }
+.memory-preview { font-size: 13px; color: #cbd5e1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.memory-preview img { height: 40px; border-radius: 4px; background: white; }
 </style>
 </head>
 <body>
@@ -153,7 +105,7 @@ button {
 <div class="container">
   <div class="card">
     <h2>Memory Jar Admin 🍯</h2>
-    <p class="subtitle">Manage Saved Memories</p>
+    <p class="subtitle">Drop a new note, or delete live memories</p>
     
     <form id="memory-form">
       <label for="typeSelect">Select Folder Category</label>
@@ -177,23 +129,34 @@ button {
         <div id="canvasBoxBounds">
           <canvas id="doodleCanvas"></canvas>
         </div>
+
+        <div class="tools-row">
+          <button type="button" class="tool-btn active" id="tool-pen" onclick="setBrushMode('pen', this)">✏️ Pen</button>
+          <button type="button" class="tool-btn" id="tool-highlighter" onclick="setBrushMode('highlighter', this)">🖍️ Highlighter</button>
+        </div>
         
         <div class="canvas-controls">
-          <div class="color-swatch active" style="background: #ef4444;" onclick="setStrokeColor('#ef4444', this)"></div>
+          <div class="color-swatch active" style="background: #000000;" onclick="setStrokeColor('#000000', this)"></div>
+          <div class="color-swatch" style="background: #ef4444;" onclick="setStrokeColor('#ef4444', this)"></div>
+          <div class="color-swatch" style="background: #ec4899;" onclick="setStrokeColor('#ec4899', this)"></div>
           <div class="color-swatch" style="background: #3b82f6;" onclick="setStrokeColor('#3b82f6', this)"></div>
           <div class="color-swatch" style="background: #10b981;" onclick="setStrokeColor('#10b981', this)"></div>
-          <div class="color-swatch" style="background: #000000;" onclick="setStrokeColor('#000000', this)"></div>
+          <div class="color-swatch" style="background: #eab308;" onclick="setStrokeColor('#eab308', this)"></div>
           <button type="button" class="btn-secondary" onclick="clearCanvas()" style="margin-left: auto; width: auto;">Clear</button>
         </div>
       </div>
       
       <button type="button" id="submit-btn" onclick="postMemory()">Drop into Jar ✨</button>
     </form>
-    
     <div id="status-message"></div>
   </div>
-  
-  <a href="index.html" class="nav-link">Go to Main View ➡️</a>
+
+  <div class="card">
+    <h3 style="margin: 0 0 10px 0; color: #cbd5e1; font-size: 16px;">Live Database (Manage Drops)</h3>
+    <div id="live-memories" class="memory-list">
+      <p style="font-size: 13px; color: #94a3b8; text-align: center;">Loading memories...</p>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -201,17 +164,17 @@ const SUPABASE_URL = "https://kucwhpkcpfadsdrqvxjv.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt1Y3docGtjcGZhZHNkcnF2eGp2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4NjQ2NzAsImV4cCI6MjA5NDQ0MDY3MH0.PIUz00Qm_r6NkCKL8I4XQSSmvR02qt2VPwJQVY2s2qg";
 const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-// Advanced Canvas Tracking Variables
 let canvas, ctx;
 let drawing = false;
-let rawColor = "#ef4444";
+let rawColor = "#000000";
+let brushMode = "pen";
 let strokesHistory = [];
 let currentStroke = null;
 
 window.onload = () => {
   initCanvas();
   adjustFormLayout();
-  // Listen for window resizes to recalculate device bounds
+  fetchLiveMemories();
   window.addEventListener('resize', () => setTimeout(resizeCanvasBounds, 150));
 };
 
@@ -219,16 +182,13 @@ function initCanvas() {
   canvas = document.getElementById('doodleCanvas');
   ctx = canvas.getContext('2d');
   
-  // Attach event listeners for high fidelity tracking
   canvas.onmousedown = startDrawing;
   canvas.onmousemove = moveDrawing;
   window.onmouseup = stopDrawing;
-
   canvas.ontouchstart = (e) => startDrawing(e.touches[0]);
   canvas.ontouchmove = (e) => { moveDrawing(e.touches[0]); e.preventDefault(); };
   window.ontouchend = stopDrawing;
 
-  // Resize canvas to cleanly map pixel dimensions to high-DPI screens
   setTimeout(resizeCanvasBounds, 60);
 }
 
@@ -238,43 +198,40 @@ function resizeCanvasBounds() {
   const rect = box.getBoundingClientRect();
   const dpr = window.devicePixelRatio || 1;
 
-  // Set internal canvas resolution buffers scaled to device capacity
   canvas.width = rect.width * dpr;
   canvas.height = rect.height * dpr;
-
-  // Normalize scale structure to map regular coordinate tracking variables
   ctx.scale(dpr, dpr);
-  
-  // Clear display structures and render current lines crisp
   redrawCanvasPaths();
 }
 
 function toggleFullscreenWorkspace() {
   const container = document.getElementById('canvas-container');
   const toggleBtn = document.getElementById('toggleWorkspaceBtn');
-  
   container.classList.toggle('fullscreen-workspace');
-  
-  if (container.classList.contains('fullscreen-workspace')) {
-    toggleBtn.innerText = "🔴 Exit Fullscreen";
-  } else {
-    toggleBtn.innerText = "⬜ Full Screen";
-  }
-  // Recalculate dimensions for the new view layout size
+  toggleBtn.innerText = container.classList.contains('fullscreen-workspace') ? "🔴 Exit Fullscreen" : "⬜ Full Screen";
   setTimeout(resizeCanvasBounds, 150);
+}
+
+function setBrushMode(mode, btnElement) {
+  brushMode = mode;
+  document.querySelectorAll('.tool-btn').forEach(btn => btn.classList.remove('active'));
+  btnElement.classList.add('active');
+}
+
+function setStrokeColor(color, element) {
+  rawColor = color;
+  document.querySelectorAll('.color-swatch').forEach(sw => sw.classList.remove('active'));
+  element.classList.add('active');
 }
 
 function getPointerPos(e) {
   const rect = canvas.getBoundingClientRect();
-  return {
-    x: e.clientX - rect.left,
-    y: e.clientY - rect.top
-  };
+  return { x: e.clientX - rect.left, y: e.clientY - rect.top };
 }
 
 function startDrawing(e) {
   drawing = true;
-  currentStroke = { color: rawColor, points: [getPointerPos(e)] };
+  currentStroke = { color: rawColor, mode: brushMode, points: [getPointerPos(e)] };
 }
 
 function moveDrawing(e) {
@@ -293,24 +250,28 @@ function stopDrawing() {
   redrawCanvasPaths();
 }
 
-// Render Single Pass Engine Layer (Prevents dot clumping)
 function redrawCanvasPaths() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
-  
-  // Render historical lines
   strokesHistory.forEach(renderStrokePath);
-  
-  // Render current live drawing line path
-  if (currentStroke) {
-    renderStrokePath(currentStroke);
-  }
+  if (currentStroke) renderStrokePath(currentStroke);
 }
 
 function renderStrokePath(stroke) {
-  ctx.strokeStyle = stroke.color;
-  ctx.lineWidth = 5;
   ctx.lineCap = "round";
   ctx.lineJoin = "round";
+
+  if (stroke.mode === "pen") {
+    ctx.strokeStyle = stroke.color;
+    ctx.lineWidth = 5;
+  } else if (stroke.mode === "highlighter") {
+    // Hex to RGB conversion with true alpha configuration for smooth layering
+    const r = parseInt(stroke.color.slice(1, 3), 16);
+    const g = parseInt(stroke.color.slice(3, 5), 16);
+    const b = parseInt(stroke.color.slice(5, 7), 16);
+    ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, 0.35)`;
+    // Thick ribbon lines perfect for highlighting and shading
+    ctx.lineWidth = 26; 
+  }
 
   if (stroke.points.length < 3) {
     ctx.beginPath();
@@ -321,22 +282,15 @@ function renderStrokePath(stroke) {
   }
 
   ctx.beginPath();
-  // INTERPOLATE WITH QUADRATIC BEZIER CURVES FOR SMOOTH INSTAGRAM LOOK
+  // INTERPOLATE WITH QUADRATIC BEZIER CURVES FOR SMOOTH INSTAGRAM LOOK (NO CLUMPS)
   ctx.moveTo(stroke.points[0].x, stroke.points[0].y);
   for (let i = 1; i < stroke.points.length - 1; i++) {
     const xc = (stroke.points[i].x + stroke.points[i + 1].x) / 2;
     const yc = (stroke.points[i].y + stroke.points[i + 1].y) / 2;
     ctx.quadraticCurveTo(stroke.points[i].x, stroke.points[i].y, xc, yc);
   }
-  // Connect clean to final point array
   ctx.lineTo(stroke.points[stroke.points.length - 1].x, stroke.points[stroke.points.length - 1].y);
   ctx.stroke();
-}
-
-function setStrokeColor(color, element) {
-  rawColor = color;
-  document.querySelectorAll('.color-swatch').forEach(sw => sw.classList.remove('active'));
-  element.classList.add('active');
 }
 
 function clearCanvas() {
@@ -359,17 +313,11 @@ function adjustFormLayout() {
   } else {
     standardGroup.style.display = "block";
     canvasGroup.style.display = "none";
-    if (type === "text") {
-      label.innerText = "Memory Content";
-      contentInput.placeholder = "Type your sweet note here...";
-    } else if (type === "voice") {
-      label.innerText = "Audio File Link (URL)";
-      contentInput.placeholder = "https://your-storage-site.com/voice-note.mp3";
-    }
+    label.innerText = type === "text" ? "Memory Content" : "Audio File Link (URL)";
+    contentInput.placeholder = type === "text" ? "Type your sweet note here..." : "https://...";
   }
 }
 
-// UPDATED METHOD ATTACHING INTERACTION STATES
 async function postMemory() {
   const type = document.getElementById('typeSelect').value;
   const statusMsg = document.getElementById('status-message');
@@ -386,6 +334,7 @@ async function postMemory() {
     contentData = canvas.toDataURL("image/png");
   } else {
     contentData = document.getElementById("textContent").value.trim();
+    if(!contentData) return;
   }
   
   submitBtn.disabled = true;
@@ -393,17 +342,14 @@ async function postMemory() {
   statusMsg.style.display = "none";
   
   try {
-    // FIX INTEGRATED: We explicitly add "is_read: false" here
-    const { data, error } = await _supabase
+    const { error } = await _supabase
       .from('scrapbook')
-      .insert([{ type: type, content: contentData, is_read: false }]);
+      .insert([{ type: type, content: contentData, is_read: false }]); 
       
     if (error) throw error;
     
     document.getElementById("textContent").value = "";
     clearCanvas();
-    
-    // Force exit full screen workspace layout safely upon successful post submit
     document.getElementById('canvas-container').classList.remove('fullscreen-workspace');
     document.getElementById('toggleWorkspaceBtn').innerText = "⬜ Full Screen";
 
@@ -411,14 +357,66 @@ async function postMemory() {
     statusMsg.innerText = "Saved safely! The badge counter updated instantly. ❤️";
     statusMsg.style.display = "block";
     
+    fetchLiveMemories(); // Refresh the list
   } catch (err) {
-    console.error(err);
     statusMsg.className = "error";
     statusMsg.innerText = "❌ Error: " + err.message;
     statusMsg.style.display = "block";
   } finally {
     submitBtn.disabled = false;
     submitBtn.innerText = "Drop into Jar ✨";
+  }
+}
+
+// LIVE DATABASE MANAGER LOGIC
+async function fetchLiveMemories() {
+  const list = document.getElementById('live-memories');
+  const { data, error } = await _supabase
+    .from('scrapbook')
+    .select('id, type, content, created_at')
+    .order('created_at', { ascending: false })
+    .limit(10);
+    
+  if (error) {
+    list.innerHTML = `<p style="color: #ef4444; font-size: 13px;">Failed to load data: ${error.message}</p>`;
+    return;
+  }
+  
+  if (data.length === 0) {
+    list.innerHTML = '<p style="font-size: 13px; color: #94a3b8; text-align: center;">The jar is empty.</p>';
+    return;
+  }
+
+  list.innerHTML = '';
+  data.forEach(mem => {
+    let previewHtml = '';
+    if (mem.type === 'doodle') {
+      previewHtml = `<img src="${mem.content}" alt="doodle">`;
+    } else {
+      let txt = mem.content.length > 25 ? mem.content.substring(0, 25) + '...' : mem.content;
+      previewHtml = `<span class="memory-preview">${txt}</span>`;
+    }
+
+    list.innerHTML += `
+      <div class="memory-item">
+        <div class="memory-content">
+          <span class="memory-type">${mem.type}</span>
+          ${previewHtml}
+        </div>
+        <button class="btn-danger" onclick="deleteMemory(${mem.id})">Delete</button>
+      </div>
+    `;
+  });
+}
+
+async function deleteMemory(id) {
+  if (!confirm("Are you sure you want to permanently delete this memory from her access?")) return;
+  
+  const { error } = await _supabase.from('scrapbook').delete().eq('id', id);
+  if (error) {
+    alert("Failed to delete: " + error.message);
+  } else {
+    fetchLiveMemories();
   }
 }
 </script>
