@@ -41,7 +41,7 @@ label {
   font-weight: bold;
   color: #cbd5e1;
 }
-select, textarea, input[type="text"] {
+select, textarea {
   width: 100%;
   padding: 12px;
   background: #0f172a;
@@ -52,13 +52,13 @@ select, textarea, input[type="text"] {
   font-size: 15px;
   box-sizing: border-box;
 }
-select:focus, textarea:focus, input[type="text"]:focus {
+select:focus, textarea:focus {
   outline: none;
   border-color: #f59e0b;
 }
 
-/* CANVAS DRAWING TOOL STYLES */
-.canvas-container {
+/* ADVANCED CANVAS WORKSPACE STYLES */
+#canvas-container {
   background: #0f172a;
   border: 2px dashed #334155;
   border-radius: 12px;
@@ -67,18 +67,40 @@ select:focus, textarea:focus, input[type="text"]:focus {
   display: flex;
   flex-direction: column;
   align-items: center;
+  transition: all 0.3s ease;
+}
+/* Fullscreen mode toggle classes */
+#canvas-container.fullscreen-workspace {
+  position: fixed;
+  inset: 0;
+  z-index: 999;
+  border: none;
+  border-radius: 0;
+  justify-content: center;
+  background: #1e293b;
+  padding: 20px;
+}
+#canvasBoxBounds {
+  width: 100%;
+  max-width: 400px;
+  aspect-ratio: 1/1;
+  position: relative;
 }
 canvas {
   background: white;
   border-radius: 8px;
+  width: 100%;
+  height: 100%;
   cursor: crosshair;
-  touch-action: none; /* Prevents mobile screen scrolling while drawing */
+  touch-action: none;
 }
 .canvas-controls {
   display: flex;
   gap: 10px;
   width: 100%;
-  margin-top: 10px;
+  max-width: 400px;
+  margin-top: 15px;
+  align-items: center;
 }
 .color-swatch {
   width: 32px;
@@ -87,10 +109,7 @@ canvas {
   cursor: pointer;
   border: 2px solid transparent;
 }
-.color-swatch.active {
-  border-color: white;
-  transform: scale(1.1);
-}
+.color-swatch.active { border-color: white; transform: scale(1.1); }
 
 button {
   width: 100%;
@@ -102,10 +121,6 @@ button {
   font-size: 16px;
   font-weight: bold;
   cursor: pointer;
-  transition: background 0.2s, transform 0.1s;
-}
-button:active {
-  transform: scale(0.99);
 }
 .btn-secondary {
   background: #475569;
@@ -123,7 +138,6 @@ button:active {
 }
 .success { color: #10b981; }
 .error { color: #ef4444; }
-
 .nav-link {
   display: block;
   text-align: center;
@@ -132,7 +146,6 @@ button:active {
   font-size: 14px;
   margin-top: 10px;
 }
-.nav-link:hover { color: #f59e0b; }
 </style>
 </head>
 <body>
@@ -140,24 +153,30 @@ button:active {
 <div class="container">
   <div class="card">
     <h2>Memory Jar Admin 🍯</h2>
-    <p class="subtitle">Drop a new note, voice link, or draw a fresh doodle</p>
+    <p class="subtitle">Manage Saved Memories</p>
     
-    <form id="memory-form" onsubmit="saveMemory(event)">
-      <label for="type">Select Folder Category</label>
-      <select id="type" onchange="adjustFormLayout()">
+    <form id="memory-form">
+      <label for="typeSelect">Select Folder Category</label>
+      <select id="typeSelect" onchange="adjustFormLayout()">
         <option value="text">💬 Message (Text Note)</option>
         <option value="voice">🎤 Voice Note (Audio URL)</option>
         <option value="doodle">🎨 Doodle Canvas (Draw Here)</option>
       </select>
       
       <div id="standard-input-group">
-        <label id="content-label" for="content">Memory Content</label>
-        <textarea id="content" rows="5" placeholder="Type your sweet note here..."></textarea>
+        <label id="content-label" for="textContent">Memory Content</label>
+        <textarea id="textContent" rows="5" placeholder="Type your sweet note here..."></textarea>
       </div>
 
-      <div id="canvas-input-group" class="canvas-container" style="display: none;">
-        <label style="align-self: flex-start;">Draw Your Doodle Below:</label>
-        <canvas id="doodleCanvas" width="320" height="320"></canvas>
+      <div id="canvas-container" style="display: none;">
+        <div style="display: flex; justify-content: space-between; width: 100%; max-width: 400px; margin-bottom: 8px;">
+          <label style="margin: 0;">Draw Your Doodle:</label>
+          <button type="button" id="toggleWorkspaceBtn" class="btn-secondary" style="width: auto; padding: 4px 8px;" onclick="toggleFullscreenWorkspace()">⬜ Full Screen</button>
+        </div>
+        
+        <div id="canvasBoxBounds">
+          <canvas id="doodleCanvas"></canvas>
+        </div>
         
         <div class="canvas-controls">
           <div class="color-swatch active" style="background: #ef4444;" onclick="setStrokeColor('#ef4444', this)"></div>
@@ -168,7 +187,7 @@ button:active {
         </div>
       </div>
       
-      <button type="submit" id="submit-btn">Drop into Jar ✨</button>
+      <button type="button" id="submit-btn" onclick="postMemory()">Drop into Jar ✨</button>
     </form>
     
     <div id="status-message"></div>
@@ -180,78 +199,166 @@ button:active {
 <script>
 const SUPABASE_URL = "https://kucwhpkcpfadsdrqvxjv.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt1Y3docGtjcGZhZHNkcnF2eGp2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4NjQ2NzAsImV4cCI6MjA5NDQ0MDY3MH0.PIUz00Qm_r6NkCKL8I4XQSSmvR02qt2VPwJQVY2s2qg";
-const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-// Canvas Reference Elements
+// Advanced Canvas Tracking Variables
 let canvas, ctx;
 let drawing = false;
-let rawColor = "#ef4444"; // Default active color swatch match
+let rawColor = "#ef4444";
+let strokesHistory = [];
+let currentStroke = null;
 
 window.onload = () => {
   initCanvas();
   adjustFormLayout();
+  // Listen for window resizes to recalculate device bounds
+  window.addEventListener('resize', () => setTimeout(resizeCanvasBounds, 150));
 };
 
 function initCanvas() {
   canvas = document.getElementById('doodleCanvas');
   ctx = canvas.getContext('2d');
   
-  ctx.strokeStyle = rawColor;
-  ctx.lineWidth = 4;
+  // Attach event listeners for high fidelity tracking
+  canvas.onmousedown = startDrawing;
+  canvas.onmousemove = moveDrawing;
+  window.onmouseup = stopDrawing;
+
+  canvas.ontouchstart = (e) => startDrawing(e.touches[0]);
+  canvas.ontouchmove = (e) => { moveDrawing(e.touches[0]); e.preventDefault(); };
+  window.ontouchend = stopDrawing;
+
+  // Resize canvas to cleanly map pixel dimensions to high-DPI screens
+  setTimeout(resizeCanvasBounds, 60);
+}
+
+function resizeCanvasBounds() {
+  const box = document.getElementById('canvasBoxBounds');
+  if (!box) return;
+  const rect = box.getBoundingClientRect();
+  const dpr = window.devicePixelRatio || 1;
+
+  // Set internal canvas resolution buffers scaled to device capacity
+  canvas.width = rect.width * dpr;
+  canvas.height = rect.height * dpr;
+
+  // Normalize scale structure to map regular coordinate tracking variables
+  ctx.scale(dpr, dpr);
+  
+  // Clear display structures and render current lines crisp
+  redrawCanvasPaths();
+}
+
+function toggleFullscreenWorkspace() {
+  const container = document.getElementById('canvas-container');
+  const toggleBtn = document.getElementById('toggleWorkspaceBtn');
+  
+  container.classList.toggle('fullscreen-workspace');
+  
+  if (container.classList.contains('fullscreen-workspace')) {
+    toggleBtn.innerText = "🔴 Exit Fullscreen";
+  } else {
+    toggleBtn.innerText = "⬜ Full Screen";
+  }
+  // Recalculate dimensions for the new view layout size
+  setTimeout(resizeCanvasBounds, 150);
+}
+
+function getPointerPos(e) {
+  const rect = canvas.getBoundingClientRect();
+  return {
+    x: e.clientX - rect.left,
+    y: e.clientY - rect.top
+  };
+}
+
+function startDrawing(e) {
+  drawing = true;
+  currentStroke = { color: rawColor, points: [getPointerPos(e)] };
+}
+
+function moveDrawing(e) {
+  if (!drawing) return;
+  currentStroke.points.push(getPointerPos(e));
+  redrawCanvasPaths();
+}
+
+function stopDrawing() {
+  if (!drawing) return;
+  drawing = false;
+  if (currentStroke && currentStroke.points.length > 0) {
+    strokesHistory.push(currentStroke);
+  }
+  currentStroke = null;
+  redrawCanvasPaths();
+}
+
+// Render Single Pass Engine Layer (Prevents dot clumping)
+function redrawCanvasPaths() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  
+  // Render historical lines
+  strokesHistory.forEach(renderStrokePath);
+  
+  // Render current live drawing line path
+  if (currentStroke) {
+    renderStrokePath(currentStroke);
+  }
+}
+
+function renderStrokePath(stroke) {
+  ctx.strokeStyle = stroke.color;
+  ctx.lineWidth = 5;
   ctx.lineCap = "round";
   ctx.lineJoin = "round";
 
-  // PC Mouse Events
-  canvas.onmousedown = (e) => { drawing = true; draw(e); };
-  canvas.onmousemove = (e) => draw(e);
-  window.onmouseup = () => drawing = false;
+  if (stroke.points.length < 3) {
+    ctx.beginPath();
+    ctx.moveTo(stroke.points[0].x, stroke.points[0].y);
+    ctx.lineTo(stroke.points[0].x, stroke.points[0].y);
+    ctx.stroke();
+    return;
+  }
 
-  // Mobile Touch Listeners
-  canvas.ontouchstart = (e) => { drawing = true; draw(e.touches[0]); };
-  canvas.ontouchmove = (e) => { draw(e.touches[0]); e.preventDefault(); };
-  window.ontouchend = () => drawing = false;
-}
-
-function draw(e) {
-  if (!drawing) return;
-  const rect = canvas.getBoundingClientRect();
-  const x = e.clientX - rect.left;
-  const y = e.clientY - rect.top;
-
-  ctx.lineTo(x, y);
-  ctx.stroke();
   ctx.beginPath();
-  ctx.moveTo(x, y);
+  // INTERPOLATE WITH QUADRATIC BEZIER CURVES FOR SMOOTH INSTAGRAM LOOK
+  ctx.moveTo(stroke.points[0].x, stroke.points[0].y);
+  for (let i = 1; i < stroke.points.length - 1; i++) {
+    const xc = (stroke.points[i].x + stroke.points[i + 1].x) / 2;
+    const yc = (stroke.points[i].y + stroke.points[i + 1].y) / 2;
+    ctx.quadraticCurveTo(stroke.points[i].x, stroke.points[i].y, xc, yc);
+  }
+  // Connect clean to final point array
+  ctx.lineTo(stroke.points[stroke.points.length - 1].x, stroke.points[stroke.points.length - 1].y);
+  ctx.stroke();
 }
 
 function setStrokeColor(color, element) {
   rawColor = color;
-  ctx.strokeStyle = color;
   document.querySelectorAll('.color-swatch').forEach(sw => sw.classList.remove('active'));
   element.classList.add('active');
 }
 
 function clearCanvas() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  ctx.beginPath();
+  strokesHistory = [];
+  currentStroke = null;
+  redrawCanvasPaths();
 }
 
 function adjustFormLayout() {
-  const type = document.getElementById("type").value;
+  const type = document.getElementById("typeSelect").value;
   const standardGroup = document.getElementById("standard-input-group");
-  const canvasGroup = document.getElementById("canvas-input-group");
-  const contentInput = document.getElementById("content");
+  const canvasGroup = document.getElementById("canvas-container");
+  const contentInput = document.getElementById("textContent");
   const label = document.getElementById("content-label");
   
   if (type === "doodle") {
     standardGroup.style.display = "none";
     canvasGroup.style.display = "flex";
-    contentInput.required = false;
+    setTimeout(resizeCanvasBounds, 50);
   } else {
     standardGroup.style.display = "block";
     canvasGroup.style.display = "none";
-    contentInput.required = true;
-    
     if (type === "text") {
       label.innerText = "Memory Content";
       contentInput.placeholder = "Type your sweet note here...";
@@ -262,53 +369,53 @@ function adjustFormLayout() {
   }
 }
 
-async function saveMemory(event) {
-  event.preventDefault();
-  
-  const type = document.getElementById("type").value;
-  const submitBtn = document.getElementById("submit-btn");
-  const statusEl = document.getElementById("status-message");
-  let dataPayloadContent = "";
+// UPDATED METHOD ATTACHING INTERACTION STATES
+async function postMemory() {
+  const type = document.getElementById('typeSelect').value;
+  const statusMsg = document.getElementById('status-message');
+  const submitBtn = document.getElementById('submit-btn');
+  let contentData = "";
 
   if (type === "doodle") {
-    // Check if canvas is empty before saving
-    const buffer = document.createElement('canvas');
-    buffer.width = canvas.width;
-    buffer.height = canvas.height;
-    if (canvas.toDataURL() === buffer.toDataURL()) {
-      statusEl.className = "error";
-      statusEl.innerText = "Please draw something on the canvas first!";
-      statusEl.style.display = "block";
+    if (strokesHistory.length === 0) {
+      statusMsg.className = "error";
+      statusMsg.innerText = "Please draw something on the canvas first!";
+      statusMsg.style.display = "block";
       return;
     }
-    // Turn the drawing into an exportable base64 image data string
-    dataPayloadContent = canvas.toDataURL("image/png");
+    contentData = canvas.toDataURL("image/png");
   } else {
-    dataPayloadContent = document.getElementById("content").value.trim();
+    contentData = document.getElementById("textContent").value.trim();
   }
   
   submitBtn.disabled = true;
-  submitBtn.innerText = "Dropping it in...";
-  statusEl.style.display = "none";
+  submitBtn.innerText = "🚀 Sending to her scrapbook...";
+  statusMsg.style.display = "none";
   
   try {
-    const { data, error } = await sb
+    // FIX INTEGRATED: We explicitly add "is_read: false" here
+    const { data, error } = await _supabase
       .from('scrapbook')
-      .insert([{ type: type, content: dataPayloadContent, is_read: false }]);
+      .insert([{ type: type, content: contentData, is_read: false }]);
       
     if (error) throw error;
     
-    document.getElementById("content").value = "";
+    document.getElementById("textContent").value = "";
     clearCanvas();
-    statusEl.className = "success";
-    statusEl.innerText = "Saved safely! The badge counter updated instantly. ❤️";
-    statusEl.style.display = "block";
+    
+    // Force exit full screen workspace layout safely upon successful post submit
+    document.getElementById('canvas-container').classList.remove('fullscreen-workspace');
+    document.getElementById('toggleWorkspaceBtn').innerText = "⬜ Full Screen";
+
+    statusMsg.className = "success";
+    statusMsg.innerText = "Saved safely! The badge counter updated instantly. ❤️";
+    statusMsg.style.display = "block";
     
   } catch (err) {
     console.error(err);
-    statusEl.className = "error";
-    statusEl.innerText = "Failed to drop into jar. Check database rule setups.";
-    statusEl.style.display = "block";
+    statusMsg.className = "error";
+    statusMsg.innerText = "❌ Error: " + err.message;
+    statusMsg.style.display = "block";
   } finally {
     submitBtn.disabled = false;
     submitBtn.innerText = "Drop into Jar ✨";
