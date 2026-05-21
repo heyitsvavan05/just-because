@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Inbox - Bebi's Memory Jar</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Admin Panel - Memory Jar</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 body {
@@ -17,198 +17,164 @@ body {
   max-width: 420px;
   margin: auto;
 }
-
-/* BACK NAVIGATION LINK */
-.back-link {
-  margin-bottom: 16px;
+.card {
+  background: #1e293b;
+  padding: 20px;
+  border-radius: 16px;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+  margin-bottom: 20px;
 }
-.back-link a {
+h2 {
+  margin: 0 0 6px 0;
+  color: #fde047;
+  font-size: 22px;
+}
+p.subtitle {
+  margin: 0 0 20px 0;
+  color: #94a3b8;
+  font-size: 14px;
+}
+label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 14px;
+  font-weight: bold;
+  color: #cbd5e1;
+}
+select, textarea, input[type="text"] {
+  width: 100%;
+  padding: 12px;
+  background: #0f172a;
+  border: 1px solid #334155;
+  border-radius: 8px;
+  color: white;
+  margin-bottom: 20px;
+  font-size: 15px;
+  box-sizing: border-box;
+}
+select:focus, textarea:focus, input[type="text"]:focus {
+  outline: none;
+  border-color: #f59e0b;
+}
+
+/* CANVAS DRAWING TOOL STYLES */
+.canvas-container {
+  background: #0f172a;
+  border: 2px dashed #334155;
+  border-radius: 12px;
+  padding: 10px;
+  margin-bottom: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+canvas {
+  background: white;
+  border-radius: 8px;
+  cursor: crosshair;
+  touch-action: none; /* Prevents mobile screen scrolling while drawing */
+}
+.canvas-controls {
+  display: flex;
+  gap: 10px;
+  width: 100%;
+  margin-top: 10px;
+}
+.color-swatch {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  cursor: pointer;
+  border: 2px solid transparent;
+}
+.color-swatch.active {
+  border-color: white;
+  transform: scale(1.1);
+}
+
+button {
+  width: 100%;
+  background: #f59e0b;
+  color: #0f172a;
+  border: none;
+  padding: 14px;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.1s;
+}
+button:active {
+  transform: scale(0.99);
+}
+.btn-secondary {
+  background: #475569;
+  color: white;
+  padding: 10px;
+  font-size: 14px;
+}
+
+#status-message {
+  text-align: center;
+  font-size: 14px;
+  margin-top: 14px;
+  font-weight: bold;
+  display: none;
+}
+.success { color: #10b981; }
+.error { color: #ef4444; }
+
+.nav-link {
+  display: block;
+  text-align: center;
   color: #94a3b8;
   text-decoration: none;
   font-size: 14px;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  transition: color 0.2s;
+  margin-top: 10px;
 }
-.back-link a:hover {
-  color: #f59e0b;
-}
-
-/* FOLDER TABS SYSTEM */
-.tab-container {
-  display: flex;
-  justify-content: space-between;
-  background: #1e293b;
-  padding: 6px;
-  border-radius: 12px;
-  margin-bottom: 20px;
-  box-shadow: 0 4px 6px -1px rgba(0,0,0,0.2);
-}
-.tab-btn {
-  flex: 1;
-  background: transparent;
-  color: #94a3b8;
-  border: none;
-  padding: 12px 0;
-  font-size: 13px;
-  font-weight: bold;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-.tab-btn.active {
-  background: #0f172a;
-  color: #f59e0b;
-  box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);
-}
-
-h3 {
-  color: #f8fafc;
-  margin-top: 0;
-  border-bottom: 2px solid #1e293b;
-  padding-bottom: 8px;
-  font-size: 18px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.count-tracker {
-  font-size: 13px;
-  background: #ef4444;
-  color: white;
-  padding: 2px 8px;
-  border-radius: 20px;
-  font-weight: bold;
-}
-
-/* CARDS */
-.card {
-  display: flex;
-  align-items: center;
-  padding: 16px;
-  background: #1e293b;
-  border-radius: 12px;
-  margin-bottom: 12px;
-  cursor: pointer;
-  box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
-  transition: transform 0.1s;
-  position: relative;
-}
-.card:active { transform: scale(0.98); }
-
-/* Tiny indicator line for cards that are brand new/unread */
-.card.unread-card::before {
-  content: "";
-  position: absolute;
-  left: 6px;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 4px;
-  height: 24px;
-  background: #ef4444;
-  border-radius: 4px;
-}
-
-.icon {
-  width: 44px;
-  height: 44px;
-  background: #0f172a;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  border-radius: 50%;
-  margin-right: 14px;
-  font-size: 20px;
-  flex-shrink: 0;
-}
-.preview-box {
-  font-size: 15px;
-  color: #cbd5e1;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  width: 100%;
-}
-.preview-box img {
-  max-height: 50px;
-  border-radius: 6px;
-  background: white;
-}
-.preview-box audio {
-  max-width: 180px;
-  height: 28px;
-}
-
-/* OVERLAY POPUPS */
-.modal {
-  position: fixed;
-  inset: 0;
-  background: rgba(15, 23, 42, 0.85);
-  display: none;
-  justify-content: center;
-  align-items: center;
-  padding: 20px;
-  z-index: 100;
-  backdrop-filter: blur(4px);
-}
-.modal-content {
-  background: #1e293b;
-  color: #f8fafc;
-  padding: 24px;
-  border-radius: 16px;
-  width: 100%;
-  max-width: 360px;
-  box-shadow: 0 20px 25px -5px rgba(0,0,0,0.5);
-  box-sizing: border-box;
-  text-align: center;
-}
-#modal-body {
-  margin-bottom: 20px;
-  font-size: 16px;
-  line-height: 1.5;
-  color: #e2e8f0;
-}
-.modal-content button {
-  background: #f59e0b;
-  color: #0f172a;
-  font-weight: bold;
-  border: none;
-  padding: 12px 24px;
-  border-radius: 8px;
-  cursor: pointer;
-  width: 100%;
-}
-.no-items { text-align: center; color: #64748b; margin-top: 40px; font-size: 15px; }
+.nav-link:hover { color: #f59e0b; }
 </style>
 </head>
 <body>
 
 <div class="container">
+  <div class="card">
+    <h2>Memory Jar Admin 🍯</h2>
+    <p class="subtitle">Drop a new note, voice link, or draw a fresh doodle</p>
+    
+    <form id="memory-form" onsubmit="saveMemory(event)">
+      <label for="type">Select Folder Category</label>
+      <select id="type" onchange="adjustFormLayout()">
+        <option value="text">💬 Message (Text Note)</option>
+        <option value="voice">🎤 Voice Note (Audio URL)</option>
+        <option value="doodle">🎨 Doodle Canvas (Draw Here)</option>
+      </select>
+      
+      <div id="standard-input-group">
+        <label id="content-label" for="content">Memory Content</label>
+        <textarea id="content" rows="5" placeholder="Type your sweet note here..."></textarea>
+      </div>
 
-  <div class="back-link">
-    <a href="index.html">⬅️ Back to Jar</a>
+      <div id="canvas-input-group" class="canvas-container" style="display: none;">
+        <label style="align-self: flex-start;">Draw Your Doodle Below:</label>
+        <canvas id="doodleCanvas" width="320" height="320"></canvas>
+        
+        <div class="canvas-controls">
+          <div class="color-swatch active" style="background: #ef4444;" onclick="setStrokeColor('#ef4444', this)"></div>
+          <div class="color-swatch" style="background: #3b82f6;" onclick="setStrokeColor('#3b82f6', this)"></div>
+          <div class="color-swatch" style="background: #10b981;" onclick="setStrokeColor('#10b981', this)"></div>
+          <div class="color-swatch" style="background: #000000;" onclick="setStrokeColor('#000000', this)"></div>
+          <button type="button" class="btn-secondary" onclick="clearCanvas()" style="margin-left: auto; width: auto;">Clear</button>
+        </div>
+      </div>
+      
+      <button type="submit" id="submit-btn">Drop into Jar ✨</button>
+    </form>
+    
+    <div id="status-message"></div>
   </div>
-
-  <div class="tab-container">
-    <button class="tab-btn" id="tab-text" onclick="switchFolder('text')">💬 Messages</button>
-    <button class="tab-btn" id="tab-voice" onclick="switchFolder('voice')">🎤 Voice Notes</button>
-    <button class="tab-btn" id="tab-doodle" onclick="switchFolder('doodle')">🎨 Doodles</button>
-  </div>
-
-  <h3 id="title-wrapper">
-    <span id="title">Loading Folder...</span>
-    <span id="header-counter" class="count-tracker" style="display:none;">0</span>
-  </h3>
-  <div id="list"></div>
-</div>
-
-<div class="modal" id="modal" onclick="closeModal()">
-  <div class="modal-content" onclick="event.stopPropagation()">
-    <div id="modal-body"></div>
-    <button onclick="closeModal()">Close Memory</button>
-  </div>
+  
+  <a href="index.html" class="nav-link">Go to Main View ➡️</a>
 </div>
 
 <script>
@@ -216,148 +182,136 @@ const SUPABASE_URL = "https://kucwhpkcpfadsdrqvxjv.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt1Y3docGtjcGZhZHNkcnF2eGp2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4NjQ2NzAsImV4cCI6MjA5NDQ0MDY3MH0.PIUz00Qm_r6NkCKL8I4XQSSmvR02qt2VPwJQVY2s2qg";
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const urlParams = new URLSearchParams(window.location.search);
-let currentFolder = urlParams.get("view") || "text";
-let localUnreadCount = parseInt(urlParams.get("unread")) || 0;
+// Canvas Reference Elements
+let canvas, ctx;
+let drawing = false;
+let rawColor = "#ef4444"; // Default active color swatch match
 
 window.onload = () => {
-  switchFolder(currentFolder); 
+  initCanvas();
+  adjustFormLayout();
 };
 
-function updateHeaderCounterDisplay() {
-  const counterBadge = document.getElementById("header-counter");
-  if (localUnreadCount > 0) {
-    counterBadge.innerText = `${localUnreadCount} unread`;
-    counterBadge.style.display = "inline-block";
+function initCanvas() {
+  canvas = document.getElementById('doodleCanvas');
+  ctx = canvas.getContext('2d');
+  
+  ctx.strokeStyle = rawColor;
+  ctx.lineWidth = 4;
+  ctx.lineCap = "round";
+  ctx.lineJoin = "round";
+
+  // PC Mouse Events
+  canvas.onmousedown = (e) => { drawing = true; draw(e); };
+  canvas.onmousemove = (e) => draw(e);
+  window.onmouseup = () => drawing = false;
+
+  // Mobile Touch Listeners
+  canvas.ontouchstart = (e) => { drawing = true; draw(e.touches[0]); };
+  canvas.ontouchmove = (e) => { draw(e.touches[0]); e.preventDefault(); };
+  window.ontouchend = () => drawing = false;
+}
+
+function draw(e) {
+  if (!drawing) return;
+  const rect = canvas.getBoundingClientRect();
+  const x = e.clientX - rect.left;
+  const y = e.clientY - rect.top;
+
+  ctx.lineTo(x, y);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(x, y);
+}
+
+function setStrokeColor(color, element) {
+  rawColor = color;
+  ctx.strokeStyle = color;
+  document.querySelectorAll('.color-swatch').forEach(sw => sw.classList.remove('active'));
+  element.classList.add('active');
+}
+
+function clearCanvas() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.beginPath();
+}
+
+function adjustFormLayout() {
+  const type = document.getElementById("type").value;
+  const standardGroup = document.getElementById("standard-input-group");
+  const canvasGroup = document.getElementById("canvas-input-group");
+  const contentInput = document.getElementById("content");
+  const label = document.getElementById("content-label");
+  
+  if (type === "doodle") {
+    standardGroup.style.display = "none";
+    canvasGroup.style.display = "flex";
+    contentInput.required = false;
   } else {
-    counterBadge.style.display = "none";
-  }
-}
-
-function switchFolder(folderType) {
-  currentFolder = folderType;
-
-  // If she manually switch tabs inside the inbox, clear the injected url counter 
-  // so it gracefully fetches fresh data without getting stuck on old values
-  if(urlParams.get("view") !== folderType) {
-    localUnreadCount = 0; 
-  }
-
-  document.querySelectorAll('.tab-btn').forEach(btn => {
-    btn.classList.remove('active');
-  });
-
-  const activeTab = document.getElementById(`tab-${folderType}`);
-  if (activeTab) {
-    activeTab.classList.add('active');
-  }
-
-  const titleEl = document.getElementById("title");
-  if (folderType === "text") titleEl.innerText = "Messages";
-  if (folderType === "voice") titleEl.innerText = "Voice Notes";
-  if (folderType === "doodle") titleEl.innerText = "Doodles";
-
-  updateHeaderCounterDisplay();
-  loadMemories();
-}
-
-async function loadMemories() {
-  const list = document.getElementById("list");
-  list.innerHTML = `<p class="no-items" style="color: #f59e0b;">Fetching memories...</p>`;
-
-  const { data, error } = await sb.from("scrapbook")
-    .select("*")
-    .eq("type", currentFolder)
-    .order("created_at", { ascending: false });
-
-  list.innerHTML = "";
-
-  if(error || !data || data.length === 0) {
-    list.innerHTML = `<p class="no-items">This folder is empty right now. ✨</p>`;
-    localUnreadCount = 0;
-    updateHeaderCounterDisplay();
-    return;
-  }
-
-  // Recount accurate local unread count from payload directly 
-  localUnreadCount = data.filter(item => item.is_read === false || item.is_read === null).length;
-  updateHeaderCounterDisplay();
-
-  data.forEach(item => {
-    const div = document.createElement("div");
-    div.className = "card";
+    standardGroup.style.display = "block";
+    canvasGroup.style.display = "none";
+    contentInput.required = true;
     
-    // Add visual flag if unread
-    if (item.is_read === false || item.is_read === null) {
-      div.classList.add("unread-card");
+    if (type === "text") {
+      label.innerText = "Memory Content";
+      contentInput.placeholder = "Type your sweet note here...";
+    } else if (type === "voice") {
+      label.innerText = "Audio File Link (URL)";
+      contentInput.placeholder = "https://your-storage-site.com/voice-note.mp3";
     }
-
-    let folderIcon = "💌";
-    let previewElement = "";
-
-    if (item.type === "text") {
-      folderIcon = "💬";
-      previewElement = `<span>${item.content.slice(0, 40)}${item.content.length > 40 ? '...' : ''}</span>`;
-    } else if (item.type === "voice") {
-      folderIcon = "🎤";
-      previewElement = `<audio src="${item.content}" controls preload="metadata"></audio>`;
-    } else if (item.type === "doodle") {
-      folderIcon = "🎨";
-      previewElement = `<img src="${item.content}" alt="Doodle Preview"/>`;
-    }
-
-    div.innerHTML = `
-      <div class="icon">${folderIcon}</div>
-      <div class="preview-box">${previewElement}</div>
-    `;
-
-    // Pass the unique HTML div instance along so we can modify its styles instantly on click
-    div.onclick = () => openMemory(item, div);
-    list.appendChild(div);
-  });
+  }
 }
 
-async function openMemory(item, cardElement) {
-  const body = document.getElementById("modal-body");
+async function saveMemory(event) {
+  event.preventDefault();
+  
+  const type = document.getElementById("type").value;
+  const submitBtn = document.getElementById("submit-btn");
+  const statusEl = document.getElementById("status-message");
+  let dataPayloadContent = "";
 
-  if (item.type === "doodle") {
-    body.innerHTML = `<img src="${item.content}" style="max-width:100%; border-radius:8px; background:white;">`;
-  } else if (item.type === "voice") {
-    body.innerHTML = `<p style="margin-bottom:10px; font-size:14px; color:#94a3b8;">Voice Note:</p><audio controls src="${item.content}" style="width:100%" autoplay></audio>`;
+  if (type === "doodle") {
+    // Check if canvas is empty before saving
+    const buffer = document.createElement('canvas');
+    buffer.width = canvas.width;
+    buffer.height = canvas.height;
+    if (canvas.toDataURL() === buffer.toDataURL()) {
+      statusEl.className = "error";
+      statusEl.innerText = "Please draw something on the canvas first!";
+      statusEl.style.display = "block";
+      return;
+    }
+    // Turn the drawing into an exportable base64 image data string
+    dataPayloadContent = canvas.toDataURL("image/png");
   } else {
-    body.innerText = item.content;
+    dataPayloadContent = document.getElementById("content").value.trim();
   }
-
-  document.getElementById("modal").style.display = "flex";
-
-  // If unread, process updates
-  if (item.is_read === false || item.is_read === null) {
-    // 1. Remove the unread visual highlight strip from the card
-    cardElement.classList.remove("unread-card");
+  
+  submitBtn.disabled = true;
+  submitBtn.innerText = "Dropping it in...";
+  statusEl.style.display = "none";
+  
+  try {
+    const { data, error } = await sb
+      .from('scrapbook')
+      .insert([{ type: type, content: dataPayloadContent, is_read: false }]);
+      
+    if (error) throw error;
     
-    // 2. Local memory optimization: decrement live counts immediately
-    if (localUnreadCount > 0) {
-      localUnreadCount--;
-      updateHeaderCounterDisplay();
-    }
+    document.getElementById("content").value = "";
+    clearCanvas();
+    statusEl.className = "success";
+    statusEl.innerText = "Saved safely! The badge counter updated instantly. ❤️";
+    statusEl.style.display = "block";
     
-    // 3. Prevent loop repeats by mutating local element reference
-    item.is_read = true;
-
-    // 4. Update the Supabase Database cluster field natively
-    await sb
-      .from("scrapbook")
-      .update({ is_read: true })
-      .eq("id", item.id);
-  }
-}
-
-function closeModal() {
-  document.getElementById("modal").style.display = "none";
-  const audioEl = document.querySelector('#modal-body audio');
-  if(audioEl) {
-      audioEl.pause();
-      audioEl.currentTime = 0;
+  } catch (err) {
+    console.error(err);
+    statusEl.className = "error";
+    statusEl.innerText = "Failed to drop into jar. Check database rule setups.";
+    statusEl.style.display = "block";
+  } finally {
+    submitBtn.disabled = false;
+    submitBtn.innerText = "Drop into Jar ✨";
   }
 }
 </script>
