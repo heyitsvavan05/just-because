@@ -6,116 +6,49 @@
 <title>Admin Panel - Memory Jar</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-body { margin: 0; background: #0f172a; color: white; font-family: -apple-system, sans-serif; padding: 20px 10px; }
-.container { max-width: 420px; margin: auto; }
-.card { background: #1e293b; padding: 20px; border-radius: 16px; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3); margin-bottom: 20px; }
-h2 { margin: 0 0 6px 0; color: #fde047; font-size: 22px; }
-label { display: block; margin-bottom: 8px; font-weight: bold; color: #cbd5e1; }
-select, textarea { width: 100%; padding: 12px; background: #0f172a; border: 1px solid #334155; border-radius: 8px; color: white; margin-bottom: 20px; box-sizing: border-box; }
-
-#canvas-container { background: #0f172a; border: 2px dashed #334155; border-radius: 12px; padding: 10px; margin-bottom: 20px; display: flex; flex-direction: column; align-items: center; }
-#canvas-container.fullscreen { position: fixed; inset: 0; z-index: 999; border: none; border-radius: 0; padding: 20px; background: #1e293b; }
-#canvasBoxBounds { width: 100%; max-width: 400px; aspect-ratio: 1/1; position: relative; }
-canvas { background: white; border-radius: 8px; width: 100%; height: 100%; touch-action: none; }
-
-.tools-row, .canvas-controls { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
-.tool-btn { flex: 1; padding: 8px; background: #334155; color: white; border: 2px solid transparent; border-radius: 8px; cursor: pointer; }
-.tool-btn.active { border-color: #fde047; background: #475569; }
-.color-swatch { width: 28px; height: 28px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; }
-.color-swatch.active { border-color: white; transform: scale(1.15); }
-
-button { width: 100%; background: #f59e0b; border: none; padding: 14px; border-radius: 8px; font-weight: bold; cursor: pointer; }
-.btn-secondary { background: #475569; color: white; width: auto; padding: 6px 10px; }
-.btn-danger { background: #ef4444; color: white; padding: 6px 12px; width: auto; font-size: 12px; }
-
-.memory-item { background: #334155; padding: 12px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 10px; }
-.memory-content { display: flex; align-items: center; gap: 10px; overflow: hidden; }
+    /* ... (Keep your existing styles, adding these for full-screen) ... */
+    #canvas-container.fullscreen { 
+        position: fixed; inset: 0; z-index: 9999; background: #0f172a; padding: 20px; 
+        display: flex; flex-direction: column; justify-content: center; 
+    }
+    #canvas-container.fullscreen #canvasBoxBounds { max-width: 100%; height: 80vh; }
 </style>
 </head>
 <body>
-<div class="container">
-  <div class="card">
-    <h2>Memory Jar Admin 🍯</h2>
-    <select id="typeSelect" onchange="adjustFormLayout()">
-      <option value="text">Message (Text)</option>
-      <option value="doodle">Doodle Canvas</option>
-    </select>
-    <div id="standard-input"><textarea id="textContent" rows="5"></textarea></div>
-    <div id="canvas-container" style="display: none;">
-      <div style="display: flex; justify-content: space-between; width: 100%; max-width: 400px; margin-bottom: 8px;">
-        <label>Draw:</label>
-        <button class="btn-secondary" onclick="toggleFS()">⬜ Full Screen</button>
-      </div>
-      <div id="canvasBoxBounds"><canvas id="doodleCanvas"></canvas></div>
-      <div class="tools-row">
-        <button class="tool-btn active" onclick="setBrush('pen', this)">Pen</button>
-        <button class="tool-btn" onclick="setBrush('highlighter', this)">Highlighter</button>
-      </div>
-      <div class="canvas-controls">
-        <div class="color-swatch active" style="background:#000" onclick="setColor('#000', this)"></div>
-        <div class="color-swatch" style="background:#ef4444" onclick="setColor('#ef4444', this)"></div>
-        <div class="color-swatch" style="background:#ec4899" onclick="setColor('#ec4899', this)"></div>
-        <div class="color-swatch" style="background:#3b82f6" onclick="setColor('#3b82f6', this)"></div>
-        <div class="color-swatch" style="background:#10b981" onclick="setColor('#10b981', this)"></div>
-        <div class="color-swatch" style="background:#eab308" onclick="setColor('#eab308', this)"></div>
-        <button class="btn-secondary" onclick="clearCanvas()">Clear</button>
-      </div>
-    </div>
-    <button onclick="postMemory()">Drop into Jar ✨</button>
-  </div>
-  <div class="card"><h3>Live Database</h3><div id="live-memories"></div></div>
-</div>
-
 <script>
-const _supabase = supabase.createClient("https://kucwhpkcpfadsdrqvxjv.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt1Y3docGtjcGZhZHNkcnF2eGp2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4NjQ2NzAsImV4cCI6MjA5NDQ0MDY3MH0.PIUz00Qm_r6NkCKL8I4XQSSmvR02qt2VPwJQVY2s2qg");
-let canvas, ctx, drawing = false, mode = 'pen', color = '#000', history = [];
+    // 1. Full Screen Logic
+    function toggleFS() {
+        const container = document.getElementById('canvas-container');
+        container.classList.toggle('fullscreen');
+        resizeCanvas();
+    }
 
-window.onload = () => { canvas = document.getElementById('doodleCanvas'); ctx = canvas.getContext('2d'); fetchLiveMemories(); };
-
-function toggleFS() { 
-    document.getElementById('canvas-container').classList.toggle('fullscreen'); 
-    setTimeout(resize, 100); 
-}
-function resize() { canvas.width = canvas.clientWidth; canvas.height = canvas.clientHeight; redraw(); }
-function setBrush(m, el) { mode = m; document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active')); el.classList.add('active'); }
-function setColor(c, el) { color = c; document.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('active')); el.classList.add('active'); }
-function clearCanvas() { history = []; redraw(); }
-
-canvas.onmousedown = (e) => { drawing = true; history.push({mode, color, points: [{x: e.offsetX, y: e.offsetY}]}); };
-canvas.onmousemove = (e) => { if(!drawing) return; history[history.length-1].points.push({x: e.offsetX, y: e.offsetY}); redraw(); };
-window.onmouseup = () => drawing = false;
-
-function redraw() {
-    ctx.clearRect(0,0, canvas.width, canvas.height);
-    history.forEach(stroke => {
+    // 2. High-Fidelity Drawing Engine (Quadratic Curves)
+    function renderStrokePath(stroke) {
         ctx.beginPath();
         ctx.strokeStyle = stroke.mode === 'highlighter' ? stroke.color.replace('#','rgba(') + ',0.35)' : stroke.color;
         ctx.lineWidth = stroke.mode === 'highlighter' ? 26 : 5;
         ctx.lineCap = "round";
-        stroke.points.forEach((p, i) => i === 0 ? ctx.moveTo(p.x, p.y) : ctx.quadraticCurveTo(p.x, p.y, p.x, p.y));
+        ctx.lineJoin = "round";
+        
+        for (let i = 0; i < stroke.points.length - 1; i++) {
+            const p1 = stroke.points[i];
+            const p2 = stroke.points[i+1];
+            const xc = (p1.x + p2.x) / 2;
+            const yc = (p1.y + p2.y) / 2;
+            ctx.quadraticCurveTo(p1.x, p1.y, xc, yc);
+        }
         ctx.stroke();
-    });
-}
+    }
 
-async function fetchLiveMemories() {
-    const { data } = await _supabase.from('scrapbook').select('*').order('created_at', { ascending: false });
-    document.getElementById('live-memories').innerHTML = data.map(m => `
-        <div class="memory-item">
-            <div><strong>${m.type}</strong><br>${m.type === 'doodle' ? `<img src="${m.content}" style="width:40px; height:40px; object-fit:contain;">` : m.content}</div>
-            <button class="btn-danger" onclick="del(${m.id})">Delete</button>
-        </div>`).join('');
-}
-async function del(id) { await _supabase.from('scrapbook').delete().eq('id', id); fetchLiveMemories(); }
-async function postMemory() {
-    await _supabase.from('scrapbook').insert([{ type: document.getElementById("typeSelect").value, content: canvas.toDataURL(), is_read: false }]);
-    fetchLiveMemories();
-}
-function adjustFormLayout() {
-    const isD = document.getElementById("typeSelect").value === "doodle";
-    document.getElementById("standard-input").style.display = isD ? "none" : "block";
-    document.getElementById("canvas-container").style.display = isD ? "block" : "none";
-}
+    // 3. Thumbnail Fix (For your Xiaomi)
+    function fetchLiveMemories() {
+        // ... (Inside the map/loop)
+        const preview = mem.type === 'doodle' 
+            ? `<img src="${mem.content}" style="width: 40px; height: 40px; object-fit: contain; border-radius: 4px;">` 
+            : mem.content;
+        // ...
+    }
 </script>
 </body>
 </html>
- 
