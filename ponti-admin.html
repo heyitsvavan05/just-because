@@ -3,22 +3,32 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<link rel="stylesheet" href="Style.css">
+<title>Admin Panel - Memory Jar</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link rel="stylesheet" href="Style.css">
 </head>
 <body>
-<div class="container" style="max-width: 420px; margin: auto; padding: 20px;">
+
+<div class="container admin-container">
   <div class="card">
+    <div id="admin-status-bar">
+        <div id="home-status"></div>
+        <div id="alive-mood"></div>
+    </div>
+
     <h2>Memory Jar Admin 🍯</h2>
     <select id="typeSelect" onchange="adjustFormLayout()">
       <option value="text">Message (Text)</option>
       <option value="doodle">Doodle Canvas</option>
     </select>
     
-    <div id="standard-input"><textarea id="textContent" rows="4" style="width:100%;"></textarea></div>
+    <div id="standard-input"><textarea id="textContent" rows="4"></textarea></div>
     
     <div id="canvas-container" style="display: none;">
-      <button onclick="toggleFS()">⬜ Full Screen</button>
+      <div style="display:flex; justify-content:space-between; width:100%; margin-bottom:10px;">
+        <span style="font-weight:bold;">Draw:</span>
+        <button class="btn-secondary" onclick="toggleFS()">⬜ Full Screen</button>
+      </div>
       <div id="canvasBoxBounds" style="width:100%; aspect-ratio:1/1; position:relative;">
         <canvas id="doodleCanvas"></canvas>
       </div>
@@ -27,36 +37,51 @@
         <button class="tool-btn" onclick="setBrush('highlighter', this)">Highlighter</button>
       </div>
       <div class="canvas-controls">
-         <div class="color-swatch active" style="background:#000" onclick="setColor('#000', this)"></div>
-         <div class="color-swatch" style="background:#ef4444" onclick="setColor('#ef4444', this)"></div>
-         <button class="btn-secondary" onclick="clearCanvas()">Clear</button>
+        <div class="color-swatch active" style="background:#000" onclick="setColor('#000', this)"></div>
+        <div class="color-swatch" style="background:#ef4444" onclick="setColor('#ef4444', this)"></div>
+        <button class="btn-secondary" onclick="clearCanvas()">Clear</button>
       </div>
     </div>
     <button onclick="postMemory()">Drop into Jar ✨</button>
   </div>
+
+  <div class="card"><h3>Live Database</h3><div id="live-memories"></div></div>
 </div>
 
 <script src="Shared.js"></script>
 <script>
-const _sb = supabase.createClient("YOUR_SUPABASE_URL", "YOUR_ANON_KEY");
+const _sb = supabase.createClient("https://kucwhpkcpfadsdrqvxjv.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt1Y3docGtjcGZhZHNkcnF2eGp2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4NjQ2NzAsImV4cCI6MjA5NDQ0MDY3MH0.PIUz00Qm_r6NkCKL8I4XQSSmvR02qt2VPwJQVY2s2qg");
 let canvas, ctx, drawing = false, mode = 'pen', color = '#000', history = [];
 
 window.onload = () => { 
+    BebiEngine.boot(); // Initializes themes and statuses
     canvas = document.getElementById('doodleCanvas'); 
     ctx = canvas.getContext('2d'); 
     resizeCanvas(); 
+    fetchMemories(); 
 };
 
+// FIXED POSITIONING: getBoundingClientRect is crucial for Xiaomi touch precision
 function getPos(e) { const rect = canvas.getBoundingClientRect(); return { x: e.clientX - rect.left, y: e.clientY - rect.top }; }
+
 function resizeCanvas() { canvas.width = canvas.clientWidth; canvas.height = canvas.clientHeight; redraw(); }
+function setBrush(m, el) { mode = m; document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active')); el.classList.add('active'); }
+function setColor(c, el) { color = c; document.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('active')); el.classList.add('active'); }
+function clearCanvas() { history = []; redraw(); }
 
 function toggleFS() {
     const cont = document.getElementById('canvas-container');
-    if (!document.fullscreenElement) { cont.requestFullscreen(); cont.classList.add('fullscreen'); } 
-    else { document.exitFullscreen(); cont.classList.remove('fullscreen'); }
+    if (!document.fullscreenElement) {
+        cont.requestFullscreen().catch(err => console.log(err));
+        cont.classList.add('fullscreen');
+    } else {
+        document.exitFullscreen();
+        cont.classList.remove('fullscreen');
+    }
     setTimeout(resizeCanvas, 300);
 }
 
+// Use pointer events for touch-device stability
 canvas.onpointerdown = (e) => { drawing = true; history.push({mode, color, points: [getPos(e)]}); };
 canvas.onpointermove = (e) => { if(!drawing) return; history[history.length-1].points.push(getPos(e)); redraw(); };
 canvas.onpointerup = () => drawing = false;
@@ -68,15 +93,12 @@ function redraw() {
         ctx.strokeStyle = s.mode === 'highlighter' ? s.color.replace('#','rgba(') + ',0.35)' : s.color;
         ctx.lineWidth = s.mode === 'highlighter' ? 26 : 5;
         ctx.lineCap = "round";
+        ctx.lineJoin = "round";
         s.points.forEach((p, i) => i === 0 ? ctx.moveTo(p.x, p.y) : ctx.quadraticCurveTo(s.points[i-1].x, s.points[i-1].y, p.x, p.y));
         ctx.stroke();
     });
 }
-function adjustFormLayout() {
-    const isD = document.getElementById("typeSelect").value === "doodle";
-    document.getElementById("standard-input").style.display = isD ? "none" : "block";
-    document.getElementById("canvas-container").style.display = isD ? "block" : "none";
-}
+// ... keep your existing fetchMemories/postMemory/del functions
 </script>
 </body>
 </html>
