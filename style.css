@@ -1,12 +1,8 @@
 /* UNIVERSAL RESET & THEME */
-* {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
-}
+* { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
-    --bg-color: #121826; /* Deep NGL Blue/Black */
+    --bg-color: #121826;
     --card-bg: #1f2937;
     --border-color: #2d3748;
     --accent-yellow: #fde047;
@@ -18,214 +14,44 @@ body {
     color: white;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     line-height: 1.5;
-    overflow-x: hidden;
-    -webkit-tap-highlight-color: transparent; /* Removes the annoying blue box highlight on mobile taps */
+    -webkit-tap-highlight-color: transparent;
 }
 
-/* FOLDER HOME (index.html) */
-.folder-header {
-    text-align: center;
-    padding: 60px 20px 20px;
-}
+/* Card Components */
+.card { background: var(--card-bg); padding: 20px; border-radius: 20px; margin-bottom: 20px; }
 
-.folder-header h1 {
-    font-size: 1.5rem;
-    color: var(--accent-yellow);
-    margin-bottom: 10px;
-    text-shadow: 0 0 10px rgba(253, 224, 71, 0.2);
-}
-
-.folder-header p {
-    font-size: 0.9rem;
-    color: var(--text-dim);
-}
-
-.folder-grid {
-    display: grid;
-    /* Changed to auto-fit to perfectly handle small vs large phone screens gracefully */
-    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); 
-    gap: 20px;
-    padding: 30px;
-    max-width: 500px;
-    margin: 0 auto;
-}
-
-.folder-card {
+/* Canvas Container - Mirrored Layout */
+#canvas-container {
     background: var(--card-bg);
+    border: 1px solid var(--border-color);
     border-radius: 20px;
-    padding: 35px 10px;
+    padding: 15px;
+    margin-bottom: 20px;
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
-    transition: transform 0.1s, background 0.2s;
-    cursor: pointer;
-    box-shadow: 0 10px 20px rgba(0,0,0,0.3);
-    border: 1px solid transparent;
 }
 
-.folder-card:active {
-    transform: scale(0.95);
-    background: #2d3748;
-    border-color: var(--accent-yellow);
-}
-
-.folder-icon {
-    font-size: 3rem;
-    margin-bottom: 10px;
-}
-
-.folder-card p {
-    font-weight: 600;
-    font-size: 0.9rem;
-    color: white;
-}
-
-/* INBOX CONTAINER (inbox.html) */
-.ngl-container {
-    width: 100%;
-    max-width: 500px;
-    margin: 0 auto;
-    min-height: 100vh;
-}
-
-.ngl-header {
-    position: sticky;
-    top: 0;
-    background: var(--bg-color);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 1.2rem 1.5rem;
-    border-bottom: 1px solid var(--border-color);
-    z-index: 100;
-}
-
-.back-btn {
-    font-size: 1.2rem;
-    cursor: pointer;
-    color: var(--text-dim);
-    padding: 5px;
-}
-
-.ngl-tabs span {
-    font-weight: 800;
-    letter-spacing: 1px;
-    border-bottom: 3px solid white;
-    padding-bottom: 4px;
-}
-
-/* INBOX CARDS */
-.ngl-card {
-    display: flex;
-    align-items: center;
-    padding: 1.2rem;
-    border-bottom: 1px solid var(--border-color);
-    cursor: pointer;
-    transition: background 0.2s;
-}
-
-.ngl-card:active { background: #1a202c; }
-
-.ngl-mail-icon {
-    flex-shrink: 0;
-    width: 55px;
-    height: 55px;
-    background: #2d3748;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.5rem;
-    margin-right: 1.2rem;
-    box-shadow: inset 0 0 10px rgba(0,0,0,0.2);
-}
-
-.ngl-text-content {
-    flex-grow: 1;
-    overflow: hidden;
-}
-
-.ngl-text-content p {
-    font-weight: 600;
-    font-size: 0.95rem;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    margin-bottom: 4px;
-    color: white;
-}
-
-.ngl-text-content span {
-    font-size: 0.8rem;
-    color: var(--text-dim);
-}
-
-.ngl-arrow {
-    color: var(--text-dim);
-    font-size: 0.9rem;
-    padding-left: 10px;
-}
-
-/* MODAL DISPLAY WINDOW */
-.modal {
-    position: fixed;
-    top: 0; left: 0;
-    width: 100%; height: 100%;
-    background: rgba(15, 23, 42, 0.85); /* Smooth matching dark backdrop filter blur */
-    backdrop-filter: blur(4px);
-    -webkit-backdrop-filter: blur(4px);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 1000;
-    padding: 20px;
-}
-
-.modal-content {
-    background: white; 
-    color: #0f172a;
-    padding: 30px;
-    border-radius: 25px;
-    width: 100%;
-    max-width: 400px;
-    text-align: center;
-    box-shadow: 0 20px 40px rgba(0,0,0,0.5);
-    position: relative;
-    box-sizing: border-box;
-}
-
-.close-btn {
-    margin-top: 20px;
-    background: var(--bg-color);
-    color: white;
-    border: none;
-    padding: 12px 25px;
-    border-radius: 20px;
-    font-weight: bold;
-    width: 100%;
-    cursor: pointer;
-    font-size: 16px;
-}
-
-.close-btn:active {
-    transform: scale(0.98);
-}
-
-.hidden { display: none !important; }
-
-/* ADMIN SYSTEM & INTERACTIVE ASSETS */
-.admin-container {
-    padding: 40px 20px;
-    max-width: 400px;
-    margin: 0 auto;
-    text-align: center;
+/* Fullscreen mode for drawing */
+#canvas-container.fullscreen { 
+    position: fixed; inset: 0; z-index: 9999; 
+    background: var(--bg-color); padding: 20px; 
+    justify-content: center; border-radius: 0; border: none; 
 }
 
 canvas {
     background: white;
     border-radius: 15px;
-    margin-bottom: 20px;
-    touch-action: none; /* Crucial: Keeps touch events localized on the sketch area layout container */
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    touch-action: none;
+    cursor: crosshair;
     display: block;
 }
+
+/* Tooling */
+.tools-row, .canvas-controls { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+.tool-btn { flex: 1; padding: 10px; background: var(--border-color); color: white; border-radius: 8px; border: 2px solid transparent; cursor: pointer; }
+.tool-btn.active { border-color: var(--accent-yellow); background: #475569; }
+.color-swatch { width: 30px; height: 30px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; }
+.color-swatch.active { border-color: white; transform: scale(1.1); }
