@@ -1,68 +1,115 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Panel - Memory Jar</title>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <style>
-        body { margin: 0; background: #0f172a; color: white; font-family: sans-serif; padding: 20px; }
-        .card { background: #1e293b; padding: 20px; border-radius: 16px; margin-bottom: 20px; max-width: 400px; margin: auto; }
-        h2 { color: #fde047; margin: 0 0 15px 0; }
-        select, textarea { width: 100%; padding: 12px; background: #0f172a; border: 1px solid #334155; border-radius: 8px; color: white; margin-bottom: 15px; }
-        #canvas-container { background: #0f172a; border: 2px dashed #334155; border-radius: 12px; padding: 10px; margin-bottom: 15px; }
-        canvas { background: white; width: 100%; aspect-ratio: 1/1; border-radius: 8px; display: block; touch-action: none; }
-        button { width: 100%; background: #f59e0b; border: none; padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 10px; }
-        .btn-sm { padding: 8px; background: #475569; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Admin Panel - Memory Jar</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link rel="stylesheet" href="style.css">
+<style>
+    /* Retaining your original custom styles */
+    .memory-item { background: #334155; padding: 10px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+    .btn-danger { background: #ef4444; padding: 5px 10px; font-size: 12px; border: none; color: white; cursor: pointer; border-radius: 4px; }
+</style>
 </head>
 <body>
 
-<div class="card">
-    <h2>Admin Panel 🍯</h2>
-    <select id="typeSelect" onchange="adjustLayout()">
-        <option value="text">Message (Text)</option>
-        <option value="doodle">Doodle Canvas</option>
+<div class="container">
+  <div class="card">
+    <div id="home-status"></div>
+    <h2>Memory Jar Admin 🍯</h2>
+    <select id="typeSelect" onchange="adjustFormLayout()">
+      <option value="text">Message (Text)</option>
+      <option value="doodle">Doodle Canvas</option>
     </select>
-
-    <div id="textInput"><textarea id="msg" rows="4"></textarea></div>
-
-    <div id="doodleInput" style="display:none;">
-        <div id="canvas-container">
-            <canvas id="c"></canvas>
-        </div>
-        <button class="btn-sm" onclick="clearCanvas()">Clear Canvas</button>
+    
+    <div id="standard-input"><textarea id="textContent" rows="4"></textarea></div>
+    
+    <div id="canvas-container" style="display: none;">
+      <div style="display:flex; justify-content:space-between; width:100%; margin-bottom:10px;">
+        <span style="font-weight:bold;">Draw:</span>
+        <button class="btn-secondary" onclick="toggleFS()">⬜ Full Screen</button>
+      </div>
+      <div id="canvasBoxBounds"><canvas id="doodleCanvas"></canvas></div>
+      <div class="tools-row">
+        <button class="tool-btn active" onclick="setBrush('pen', this)">Pen</button>
+        <button class="tool-btn" onclick="setBrush('highlighter', this)">Highlighter</button>
+      </div>
+      <div class="canvas-controls">
+        <div class="color-swatch active" style="background:#000" onclick="setColor('#000', this)"></div>
+        <div class="color-swatch" style="background:#ef4444" onclick="setColor('#ef4444', this)"></div>
+        <div class="color-swatch" style="background:#3b82f6" onclick="setColor('#3b82f6', this)"></div>
+        <div class="color-swatch" style="background:#10b981" onclick="setColor('#10b981', this)"></div>
+        <button class="btn-secondary" onclick="clearCanvas()">Clear</button>
+      </div>
     </div>
+    <button onclick="postMemory()">Drop into Jar ✨</button>
+  </div>
 
-    <button onclick="save()">Drop into Jar ✨</button>
+  <div class="card"><h3>Live Database</h3><div id="live-memories"></div></div>
 </div>
 
+<script src="Shared.js"></script>
 <script>
-    const _sb = supabase.createClient("https://kucwhpkcpfadsdrqvxjv.supabase.co", "YOUR_ANON_KEY");
-    const c = document.getElementById('c');
-    const ctx = c.getContext('2d');
-    let drawing = false;
+const _sb = supabase.createClient("https://kucwhpkcpfadsdrqvxjv.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt1Y3docGtjcGZhZHNkcnF2eGp2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4NjQ2NzAsImV4cCI6MjA5NDQ0MDY3MH0.PIUz00Qm_r6NkCKL8I4XQSSmvR02qt2VPwJQVY2s2qg");
+let canvas, ctx, drawing = false, mode = 'pen', color = '#000', history = [];
 
-    window.onload = () => { c.width = c.clientWidth; c.height = c.clientHeight; };
+window.onload = () => { 
+    BebiEngine.boot(); 
+    canvas = document.getElementById('doodleCanvas'); 
+    ctx = canvas.getContext('2d'); 
+    resizeCanvas(); 
+    fetchMemories(); 
+};
 
-    function adjustLayout() {
-        const isDoodle = document.getElementById("typeSelect").value === "doodle";
-        document.getElementById("textInput").style.display = isDoodle ? "none" : "block";
-        document.getElementById("doodleInput").style.display = isDoodle ? "block" : "none";
-    }
+function resizeCanvas() { canvas.width = canvas.clientWidth; canvas.height = canvas.clientHeight; redraw(); }
+function setBrush(m, el) { mode = m; document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active')); el.classList.add('active'); }
+function setColor(c, el) { color = c; document.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('active')); el.classList.add('active'); }
+function clearCanvas() { history = []; redraw(); }
 
-    c.onpointerdown = (e) => { drawing = true; ctx.beginPath(); ctx.moveTo(e.offsetX, e.offsetY); };
-    c.onpointermove = (e) => { if(drawing) { ctx.lineTo(e.offsetX, e.offsetY); ctx.stroke(); } };
-    c.onpointerup = () => drawing = false;
+function toggleFS() {
+    const cont = document.getElementById('canvas-container');
+    if (!document.fullscreenElement) { cont.requestFullscreen(); cont.classList.add('fullscreen'); } 
+    else { document.exitFullscreen(); cont.classList.remove('fullscreen'); }
+    setTimeout(resizeCanvas, 300);
+}
 
-    function clearCanvas() { ctx.clearRect(0, 0, c.width, c.height); }
+canvas.onpointerdown = (e) => { drawing = true; history.push({mode, color, points: [{x: e.offsetX, y: e.offsetY}]}); };
+canvas.onpointermove = (e) => { if(!drawing) return; history[history.length-1].points.push({x: e.offsetX, y: e.offsetY}); redraw(); };
+canvas.onpointerup = () => drawing = false;
 
-    async function save() {
-        const type = document.getElementById("typeSelect").value;
-        const content = type === 'doodle' ? c.toDataURL() : document.getElementById("msg").value;
-        await _sb.from('scrapbook').insert([{ type, content }]);
-        alert("Saved!");
-    }
+function redraw() {
+    ctx.clearRect(0,0, canvas.width, canvas.height);
+    history.forEach(s => {
+        ctx.beginPath();
+        ctx.strokeStyle = s.mode === 'highlighter' ? s.color.replace('#','rgba(') + ',0.35)' : s.color;
+        ctx.lineWidth = s.mode === 'highlighter' ? 26 : 5;
+        ctx.lineCap = "round";
+        s.points.forEach((p, i) => i === 0 ? ctx.moveTo(p.x, p.y) : ctx.quadraticCurveTo(s.points[i-1].x, s.points[i-1].y, p.x, p.y));
+        ctx.stroke();
+    });
+}
+
+async function fetchMemories() {
+    const { data } = await _sb.from('scrapbook').select('*').order('created_at', { ascending: false });
+    document.getElementById('live-memories').innerHTML = data.map(m => `
+        <div class="memory-item">
+            <div><strong>${m.type}</strong><br>${m.type === 'doodle' ? `<img src="${m.content}" style="width:40px; height:40px; object-fit:contain; border-radius:4px;">` : m.content.substring(0, 15)}</div>
+            <button class="btn-danger" onclick="del(${m.id})">Delete</button>
+        </div>`).join('');
+}
+async function del(id) { await _sb.from('scrapbook').delete().eq('id', id); fetchMemories(); }
+async function postMemory() {
+    const type = document.getElementById("typeSelect").value;
+    const content = type === "doodle" ? canvas.toDataURL() : document.getElementById("textContent").value;
+    await _sb.from('scrapbook').insert([{ type, content, is_read: false }]);
+    fetchMemories();
+}
+function adjustFormLayout() {
+    const isD = document.getElementById("typeSelect").value === "doodle";
+    document.getElementById("standard-input").style.display = isD ? "none" : "block";
+    document.getElementById("canvas-container").style.display = isD ? "block" : "none";
+}
 </script>
 </body>
 </html>
