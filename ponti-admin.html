@@ -1,104 +1,68 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Admin Panel - Memory Jar</title>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<link rel="stylesheet" href="style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - Memory Jar</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body { margin: 0; background: #0f172a; color: white; font-family: sans-serif; padding: 20px; }
+        .card { background: #1e293b; padding: 20px; border-radius: 16px; margin-bottom: 20px; max-width: 400px; margin: auto; }
+        h2 { color: #fde047; margin: 0 0 15px 0; }
+        select, textarea { width: 100%; padding: 12px; background: #0f172a; border: 1px solid #334155; border-radius: 8px; color: white; margin-bottom: 15px; }
+        #canvas-container { background: #0f172a; border: 2px dashed #334155; border-radius: 12px; padding: 10px; margin-bottom: 15px; }
+        canvas { background: white; width: 100%; aspect-ratio: 1/1; border-radius: 8px; display: block; touch-action: none; }
+        button { width: 100%; background: #f59e0b; border: none; padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 10px; }
+        .btn-sm { padding: 8px; background: #475569; }
+    </style>
 </head>
 <body>
 
-<div class="container admin-container">
-  <div class="card">
-    <div id="admin-status-bar">
-        <div id="home-status"></div>
-        <div id="alive-mood"></div>
-    </div>
-
-    <h2>Memory Jar Admin 🍯</h2>
-    <select id="typeSelect" onchange="adjustFormLayout()">
-      <option value="text">Message (Text)</option>
-      <option value="doodle">Doodle Canvas</option>
+<div class="card">
+    <h2>Admin Panel 🍯</h2>
+    <select id="typeSelect" onchange="adjustLayout()">
+        <option value="text">Message (Text)</option>
+        <option value="doodle">Doodle Canvas</option>
     </select>
-    
-    <div id="standard-input"><textarea id="textContent" rows="4"></textarea></div>
-    
-    <div id="canvas-container" style="display: none;">
-      <div style="display:flex; justify-content:space-between; width:100%; margin-bottom:10px;">
-        <span style="font-weight:bold;">Draw:</span>
-        <button class="btn-secondary" onclick="toggleFS()">⬜ Full Screen</button>
-      </div>
-      <div id="canvasBoxBounds" style="width:100%; aspect-ratio:1/1; position:relative;">
-        <canvas id="doodleCanvas"></canvas>
-      </div>
-      <div class="tools-row">
-        <button class="tool-btn active" onclick="setBrush('pen', this)">Pen</button>
-        <button class="tool-btn" onclick="setBrush('highlighter', this)">Highlighter</button>
-      </div>
-      <div class="canvas-controls">
-        <div class="color-swatch active" style="background:#000" onclick="setColor('#000', this)"></div>
-        <div class="color-swatch" style="background:#ef4444" onclick="setColor('#ef4444', this)"></div>
-        <button class="btn-secondary" onclick="clearCanvas()">Clear</button>
-      </div>
-    </div>
-    <button onclick="postMemory()">Drop into Jar ✨</button>
-  </div>
 
-  <div class="card"><h3>Live Database</h3><div id="live-memories"></div></div>
+    <div id="textInput"><textarea id="msg" rows="4"></textarea></div>
+
+    <div id="doodleInput" style="display:none;">
+        <div id="canvas-container">
+            <canvas id="c"></canvas>
+        </div>
+        <button class="btn-sm" onclick="clearCanvas()">Clear Canvas</button>
+    </div>
+
+    <button onclick="save()">Drop into Jar ✨</button>
 </div>
 
-<script src="shared.js"></script>
 <script>
-const _sb = supabase.createClient("https://kucwhpkcpfadsdrqvxjv.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt1Y3docGtjcGZhZHNkcnF2eGp2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4NjQ2NzAsImV4cCI6MjA5NDQ0MDY3MH0.PIUz00Qm_r6NkCKL8I4XQSSmvR02qt2VPwJQVY2s2qg");
-let canvas, ctx, drawing = false, mode = 'pen', color = '#000', history = [];
+    const _sb = supabase.createClient("https://kucwhpkcpfadsdrqvxjv.supabase.co", "YOUR_ANON_KEY");
+    const c = document.getElementById('c');
+    const ctx = c.getContext('2d');
+    let drawing = false;
 
-window.onload = () => { 
-    BebiEngine.boot(); // Initializes themes and statuses
-    canvas = document.getElementById('doodleCanvas'); 
-    ctx = canvas.getContext('2d'); 
-    resizeCanvas(); 
-    fetchMemories(); 
-};
+    window.onload = () => { c.width = c.clientWidth; c.height = c.clientHeight; };
 
-// FIXED POSITIONING: getBoundingClientRect is crucial for Xiaomi touch precision
-function getPos(e) { const rect = canvas.getBoundingClientRect(); return { x: e.clientX - rect.left, y: e.clientY - rect.top }; }
-
-function resizeCanvas() { canvas.width = canvas.clientWidth; canvas.height = canvas.clientHeight; redraw(); }
-function setBrush(m, el) { mode = m; document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active')); el.classList.add('active'); }
-function setColor(c, el) { color = c; document.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('active')); el.classList.add('active'); }
-function clearCanvas() { history = []; redraw(); }
-
-function toggleFS() {
-    const cont = document.getElementById('canvas-container');
-    if (!document.fullscreenElement) {
-        cont.requestFullscreen().catch(err => console.log(err));
-        cont.classList.add('fullscreen');
-    } else {
-        document.exitFullscreen();
-        cont.classList.remove('fullscreen');
+    function adjustLayout() {
+        const isDoodle = document.getElementById("typeSelect").value === "doodle";
+        document.getElementById("textInput").style.display = isDoodle ? "none" : "block";
+        document.getElementById("doodleInput").style.display = isDoodle ? "block" : "none";
     }
-    setTimeout(resizeCanvas, 300);
-}
 
-// Use pointer events for touch-device stability
-canvas.onpointerdown = (e) => { drawing = true; history.push({mode, color, points: [getPos(e)]}); };
-canvas.onpointermove = (e) => { if(!drawing) return; history[history.length-1].points.push(getPos(e)); redraw(); };
-canvas.onpointerup = () => drawing = false;
+    c.onpointerdown = (e) => { drawing = true; ctx.beginPath(); ctx.moveTo(e.offsetX, e.offsetY); };
+    c.onpointermove = (e) => { if(drawing) { ctx.lineTo(e.offsetX, e.offsetY); ctx.stroke(); } };
+    c.onpointerup = () => drawing = false;
 
-function redraw() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    history.forEach(s => {
-        ctx.beginPath();
-        ctx.strokeStyle = s.mode === 'highlighter' ? s.color.replace('#','rgba(') + ',0.35)' : s.color;
-        ctx.lineWidth = s.mode === 'highlighter' ? 26 : 5;
-        ctx.lineCap = "round";
-        ctx.lineJoin = "round";
-        s.points.forEach((p, i) => i === 0 ? ctx.moveTo(p.x, p.y) : ctx.quadraticCurveTo(s.points[i-1].x, s.points[i-1].y, p.x, p.y));
-        ctx.stroke();
-    });
-}
-// ... keep your existing fetchMemories/postMemory/del functions
+    function clearCanvas() { ctx.clearRect(0, 0, c.width, c.height); }
+
+    async function save() {
+        const type = document.getElementById("typeSelect").value;
+        const content = type === 'doodle' ? c.toDataURL() : document.getElementById("msg").value;
+        await _sb.from('scrapbook').insert([{ type, content }]);
+        alert("Saved!");
+    }
 </script>
 </body>
 </html>
