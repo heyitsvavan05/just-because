@@ -115,3 +115,14 @@ button { width: 100%; background: #f59e0b; border: none; padding: 14px; border-r
     border-radius: 12px;
     text-align: center;
 }
+
+/* ADMIN PANEL SPECIFIC: Lock live-database thumbnails */
+.admin-thumb {
+    width: 40px !important;
+    height: 40px !important;
+    object-fit: cover !important;
+    border-radius: 8px;
+    background: white; 
+    display: inline-block;
+    vertical-align: middle;
+}
