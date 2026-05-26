@@ -59,17 +59,20 @@ window.onload = () => {
     canvas = document.getElementById('doodleCanvas'); 
     ctx = canvas.getContext('2d'); 
     
-    // We only resize initially if the canvas is visible, otherwise it happens on dropdown switch
     if (document.getElementById("canvas-container").style.display !== "none") {
         resizeCanvas();
     }
     fetchMemories(); 
 };
 
+// FORCE EXPLICIT SIZE FOR MOBILE
 function resizeCanvas() { 
-    if (!canvas || canvas.clientWidth === 0) return; // Prevent 0x0 bug
-    canvas.width = canvas.clientWidth; 
-    canvas.height = canvas.clientHeight; 
+    if (!canvas) return;
+    const boxWidth = canvas.parentElement.clientWidth;
+    if (boxWidth === 0) return;
+    
+    canvas.width = boxWidth; 
+    canvas.height = boxWidth; // Force 1:1 perfect square
     redraw(); 
 }
 
@@ -77,20 +80,39 @@ function setBrush(m, el) { mode = m; document.querySelectorAll('.tool-btn').forE
 function setColor(c, el) { color = c; document.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('active')); el.classList.add('active'); }
 function clearCanvas() { history = []; redraw(); }
 
-canvas.onpointerdown = (e) => { 
-    drawing = true; 
+// BULLETPROOF MOBILE TOUCH AND MOUSE LOGIC
+function getPointerPos(e) {
     const r = canvas.getBoundingClientRect();
-    history.push({mode, color, points: [{x: e.clientX - r.left, y: e.clientY - r.top}]}); 
-};
-canvas.onpointermove = (e) => { 
-    if(!drawing) return; 
-    const r = canvas.getBoundingClientRect();
-    history[history.length-1].points.push({x: e.clientX - r.left, y: e.clientY - r.top}); 
-    redraw(); 
-};
-canvas.onpointerup = () => drawing = false;
-// Failsafe if the pointer leaves the canvas area
-canvas.onpointerleave = () => drawing = false;
+    const evt = (e.touches && e.touches.length > 0) ? e.touches[0] : e;
+    return { x: evt.clientX - r.left, y: evt.clientY - r.top };
+}
+
+function startDraw(e) {
+    e.preventDefault(); // Stop phone from scrolling
+    drawing = true;
+    history.push({mode, color, points: [getPointerPos(e)]});
+}
+
+function doDraw(e) {
+    if(!drawing) return;
+    e.preventDefault(); // Stop phone from scrolling
+    history[history.length-1].points.push(getPointerPos(e));
+    redraw();
+}
+
+function stopDraw() { drawing = false; }
+
+// Bind standard mouse events
+canvas.addEventListener('mousedown', startDraw);
+canvas.addEventListener('mousemove', doDraw);
+canvas.addEventListener('mouseup', stopDraw);
+canvas.addEventListener('mouseleave', stopDraw);
+
+// Bind strict mobile touch events
+canvas.addEventListener('touchstart', startDraw, { passive: false });
+canvas.addEventListener('touchmove', doDraw, { passive: false });
+canvas.addEventListener('touchend', stopDraw);
+canvas.addEventListener('touchcancel', stopDraw);
 
 function redraw() {
     ctx.clearRect(0,0, canvas.width, canvas.height);
@@ -132,7 +154,7 @@ async function fetchMemories() {
                     </div>
                     
                     ${m.type === 'doodle' 
-                        ? `<img src="${safeContent}" style="width: 48px; height: 48px; object-fit: contain; background: white; border-radius: 8px; flex-shrink: 0;" alt="doodle">` 
+                        ? `<img src="${safeContent}" style="width: 40px; height: 40px; object-fit: cover; background: white; border-radius: 8px; flex-shrink: 0;" alt="doodle">` 
                         : `<span style="color: #fff; font-size: 0.95rem; word-break: break-word;">${textPreview}</span>`
                     }
                 </div>
@@ -156,12 +178,13 @@ async function postMemory() {
         const type = document.getElementById("typeSelect").value;
         const content = type === "doodle" ? canvas.toDataURL() : document.getElementById("textContent").value;
         
-        if (!content || content.trim() === "") return;
+        // Block empty notes from sending
+        if (type === "text" && (!content || content.trim() === "")) return; 
         
         await _sb.from('scrapbook').insert([{ type, content, is_read: false }]);
         
         if (type === "text") document.getElementById("textContent").value = "";
-        else clearCanvas(); // Clear doodle after sending
+        else clearCanvas(); 
         
         fetchMemories();
     } catch (err) {
@@ -173,11 +196,10 @@ async function postMemory() {
 function adjustFormLayout() {
     const isD = document.getElementById("typeSelect").value === "doodle";
     document.getElementById("standard-input").style.display = isD ? "none" : "block";
-    // Fix: Use flex so your tools-row layout stays correct, not block
     document.getElementById("canvas-container").style.display = isD ? "flex" : "none";
     
     if (isD) {
-        // Fix: Force the canvas to recalculate its size AFTER it becomes visible
+        // Redraw after 50ms so the display change has time to register in the browser
         setTimeout(resizeCanvas, 50);
     }
 }
