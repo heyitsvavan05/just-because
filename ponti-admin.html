@@ -43,7 +43,7 @@
 
     <div class="card">
         <h3>Live Database (Manage Drops)</h3>
-        <div id="live-memories"></div>
+        <div id="live-memories" style="margin-top: 15px;"></div>
     </div>
 </div>
 
@@ -95,15 +95,22 @@ function redraw() {
 async function fetchMemories() {
     const { data } = await _sb.from('scrapbook').select('*').order('created_at', { ascending: false });
     document.getElementById('live-memories').innerHTML = data.map(m => `
-        <div class="memory-item">
-            <div style="display: flex; align-items: center; gap: 10px;">
-                <strong>${m.type === 'doodle' ? '🎨' : '💬'}</strong>
+        <div style="background: var(--bg-color); border-radius: 12px; padding: 12px 15px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; position: relative;">
+            
+            <div style="position: absolute; left: 0; top: 50%; transform: translateY(-50%); width: 4px; height: 20px; background: #ef4444; border-radius: 0 4px 4px 0;"></div>
+            
+            <div style="display: flex; align-items: center; gap: 15px; padding-left: 10px;">
+                <div style="width: 40px; height: 40px; border-radius: 50%; background: #1a202c; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; flex-shrink: 0;">
+                    ${m.type === 'doodle' ? '🎨' : '💬'}
+                </div>
+                
                 ${m.type === 'doodle' 
-                    ? `<img src="${m.content}" class="admin-thumb" alt="doodle">` 
-                    : `<span>${m.content.substring(0, 20)}...</span>`
+                    ? `<img src="${m.content}" style="width: 48px; height: 48px; object-fit: contain; background: white; border-radius: 8px; flex-shrink: 0;" alt="doodle">` 
+                    : `<span style="color: #fff; font-size: 0.95rem; word-break: break-word;">${m.content.substring(0, 25)}...</span>`
                 }
             </div>
-            <button class="btn-danger" onclick="del(${m.id})">Delete</button>
+            
+            <button class="btn-danger" style="margin-left: auto; width: auto; z-index: 2;" onclick="del(${m.id})">Delete</button>
         </div>`).join('');
 }
 async function del(id) { await _sb.from('scrapbook').delete().eq('id', id); fetchMemories(); }
