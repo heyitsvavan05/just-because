@@ -25,7 +25,7 @@
         <div id="standard-input"><textarea id="textContent" placeholder="Type your sweet note here..." rows="4"></textarea></div>
 
         <div id="canvas-container" style="display: none;">
-            <div id="canvasBoxBounds" style="width: 100%;"><canvas id="doodleCanvas"></canvas></div>
+            <div id="canvasBoxBounds" style="width: 100%; touch-action: none;"><canvas id="doodleCanvas"></canvas></div>
             <div class="tools-row">
                 <button class="tool-btn active" onclick="setBrush('pen', this)">Pen</button>
                 <button class="tool-btn" onclick="setBrush('highlighter', this)">Highlighter</button>
@@ -93,16 +93,20 @@ function getPointerPos(e) {
 }
 
 function startDraw(e) {
-    e.preventDefault(); // Stop phone from scrolling
+    if (e.cancelable) e.preventDefault(); 
     drawing = true;
-    history.push({mode, color, points: [getPointerPos(e)]});
+    const pos = getPointerPos(e);
+    if (pos) history.push({mode, color, points: [pos]});
 }
 
 function doDraw(e) {
     if(!drawing) return;
-    e.preventDefault(); // Stop phone from scrolling
-    history[history.length-1].points.push(getPointerPos(e));
-    redraw();
+    if (e.cancelable) e.preventDefault();
+    const pos = getPointerPos(e);
+    if (pos) {
+        history[history.length-1].points.push(pos);
+        redraw();
+    }
 }
 
 function stopDraw() { drawing = false; }
