@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Memory Jar Admin 🍯</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -49,8 +50,12 @@
 
 <script src="Shared.js"></script>
 <script>
-// Ibinabalik ang tamang setup
+// Supabase Setup
 const _sb = supabase.createClient("https://kucwhpkcpfadsdrqvxjv.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt1Y3docGtjcGZhZHNkcnF2eGp2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4NjQ2NzAsImV4cCI6MjA5NDQ0MDY3MH0.PIUz00Qm_r6NkCKL8I4XQSSmvR02qt2VPwJQVY2s2qg");
+
+// Initialize Saved EmailJS Credentials
+emailjs.init("z7bA6b6Lw7D0V6b8Z");
+
 let canvas, ctx, drawing = false, mode = 'pen', color = '#000', history = [];
 
 window.onload = () => { 
@@ -181,8 +186,22 @@ async function postMemory() {
         // Block empty notes from sending
         if (type === "text" && (!content || content.trim() === "")) return; 
         
+        // 1. Insert into Supabase
         await _sb.from('scrapbook').insert([{ type, content, is_read: false }]);
         
+        // 2. Generate preview message for EmailJS template
+        let preview = type === "doodle" ? "🎨 V just dropped a new doodle!" : `💬 New note: "${content.substring(0, 40)}${content.length > 40 ? '...' : ''}"`;
+        
+        // 3. Send Email Notification via EmailJS
+        emailjs.send("service_lnm984s", "template_default", {
+            message: preview
+        }).then(() => {
+            console.log("Email notification sent successfully!");
+        }).catch((err) => {
+            console.error("EmailJS failed to deliver notification:", err);
+        });
+        
+        // 4. Reset interface elements
         if (type === "text") document.getElementById("textContent").value = "";
         else clearCanvas(); 
         
